@@ -134,8 +134,8 @@ class BoardPlayer:
         self.cell_size = cell_size
 
     def render(self):
-        for x in range(self.width):
-            for y in range(self.height):
+        for x in range(self.width - 1):
+            for y in range(self.height - 1):
                 pygame.draw.rect(screen, pygame.Color('black'),
                                  (x * self.cell_size + self.left,
                                  y * self.cell_size + self.top,
@@ -148,6 +148,7 @@ class BoardPlayer:
                                   self.cell_size, self.cell_size), 1)
 
 
+# бота:
 class BoardBot:
     # создание поля
     def __init__(self, width, height):
@@ -166,8 +167,8 @@ class BoardBot:
         self.cell_size = cell_size
 
     def render(self):
-        for x in range(self.width):
-            for y in range(self.height):
+        for x in range(self.width - 1):
+            for y in range(self.height - 1):
                 pygame.draw.rect(screen, pygame.Color('black'),
                                  (x * self.cell_size + self.left,
                                  y * self.cell_size + self.top,
@@ -178,6 +179,23 @@ class BoardBot:
                                  (x * self.cell_size + self.left + self.cell_size,
                                   y * self.cell_size + self.top + self.cell_size,
                                   self.cell_size, self.cell_size), 1)
+
+    def get_cell(self, mouse_pos):
+        x, y = mouse_pos
+        if (self.left + self.cell_size < x < self.left + self.width * self.cell_size and
+                self.top + self.cell_size < y < self.top + self.height * self.cell_size):
+            x = (x - self.left) // self.cell_size - 1
+            y = (y - self.top) // self.cell_size - 1
+            print((x, y))
+        else:
+            print(None)  # пока просто печатает
+
+    def on_click(self, cell_coords):
+        pass
+
+    def get_click(self, mouse_pos):
+        cell = self.get_cell(mouse_pos)
+        self.on_click(cell)
 
 
 # отдельные классы для каждого типа кораблей
@@ -212,10 +230,10 @@ try:
     start_screen = [StartScreen(), False]
     start_screen[0].draw()
 
-    board_player = BoardPlayer(10, 10)  # потом этот шаг надо оптимизировать
+    board_player = BoardPlayer(11, 11)  # потом этот шаг надо оптимизировать
     board_player.set_view(20, 40, 30)
 
-    board_bot = BoardBot(10, 10)
+    board_bot = BoardBot(11, 11)
     board_bot.set_view(400, 40, 30)
 
     clock = pygame.time.Clock()
@@ -227,9 +245,11 @@ try:
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN and\
-                    event.key == pygame.K_ESCAPE and not(start_screen[1]):
+                event.key == pygame.K_ESCAPE and not(start_screen[1]):
                 # Вновь рисуем стартовое окно в случае, если нажат Esc
                 start_screen[1] = True
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                board_bot.get_click(event.pos)
         screen.fill(pygame.Color('white'))
         if start_screen[1]:
             start_screen[0].draw()
