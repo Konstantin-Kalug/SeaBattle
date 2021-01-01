@@ -95,6 +95,73 @@ class Ships(pygame.sprite.Sprite):
         pass
 
 
+# классы полей игрока и бота
+# игрока:
+
+class Board_Player:
+    # создание поля
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.board = [[0] * width for _ in range(height)]
+        # значения по умолчанию
+        self.left = 10
+        self.top = 10
+        self.cell_size = 30
+
+    # настройка внешнего вида
+    def set_view(self, left, top, cell_size):
+        self.left = left
+        self.top = top
+        self.cell_size = cell_size
+
+    def render(self):
+        for x in range(self.width):
+            for y in range(self.height):
+                pygame.draw.rect(screen, pygame.Color('black'),
+                                 (x * self.cell_size + self.left,
+                                 y * self.cell_size + self.top,
+                                 self.cell_size, self.cell_size), 1)
+        for x in range(self.width - 2):
+            for y in range(self.height - 2):
+                pygame.draw.rect(screen, pygame.Color('blue'),
+                                 (x * self.cell_size + self.left + self.cell_size,
+                                  y * self.cell_size + self.top + self.cell_size,
+                                  self.cell_size, self.cell_size), 1)
+
+
+class Board_Bot:
+    # создание поля
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.board = [[0] * width for _ in range(height)]
+        # значения по умолчанию
+        self.left = 10
+        self.top = 10
+        self.cell_size = 30
+
+    # настройка внешнего вида
+    def set_view(self, left, top, cell_size):
+        self.left = left
+        self.top = top
+        self.cell_size = cell_size
+
+    def render(self):
+        for x in range(self.width):
+            for y in range(self.height):
+                pygame.draw.rect(screen, pygame.Color('black'),
+                                 (x * self.cell_size + self.left,
+                                 y * self.cell_size + self.top,
+                                 self.cell_size, self.cell_size), 1)
+        for x in range(self.width - 2):
+            for y in range(self.height - 2):
+                pygame.draw.rect(screen, pygame.Color('blue'),
+                                 (x * self.cell_size + self.left + self.cell_size,
+                                  y * self.cell_size + self.top + self.cell_size,
+                                  self.cell_size, self.cell_size), 1)
+
+
 # отдельные классы для каждого типа кораблей
 class Ship1(Ships):
     def init(self):
@@ -119,13 +186,19 @@ class Ship4(Ships):
 # инициализация и игроковй цикл
 # !!!Возможно, придется куда-то переносить!!!
 pygame.init()
-size = width, height = 600, 400
+size = width, height = 720, 400
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Морской бой')
 
 all_sprites = pygame.sprite.Group()
 start_screen = StartScreen()
 start_screen.draw()
+
+board_player = Board_Player(10, 10)  # потом этот шаг надо оптимизировать
+board_player.set_view(20, 40, 30)
+
+board_bot = Board_Bot(10, 10)
+board_bot.set_view(400, 40, 30)
 
 clock = pygame.time.Clock()
 # таймер использовать будем при ходе ИИ
@@ -136,5 +209,7 @@ while running:
         if event.type == pygame.QUIT:
             terminate()
     screen.fill(pygame.Color('white'))
+    board_player.render()
+    board_bot.render()
     pygame.display.flip()
     clock.tick(FPS)
