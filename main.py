@@ -49,8 +49,7 @@ class Screens:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
-                elif event.type == pygame.KEYDOWN or \
-                        event.type == pygame.MOUSEBUTTONDOWN:
+                elif event.type == pygame.MOUSEBUTTONDOWN:
                     return
             pygame.display.flip()
             self.clock.tick(FPS)
@@ -210,8 +209,8 @@ pygame.display.set_caption('Морской бой')
 error = ErrorScreen()
 try:
     all_sprites = pygame.sprite.Group()
-    start_screen = StartScreen()
-    start_screen.draw()
+    start_screen = [StartScreen(), False]
+    start_screen[0].draw()
 
     board_player = BoardPlayer(10, 10)  # потом этот шаг надо оптимизировать
     board_player.set_view(20, 40, 30)
@@ -227,7 +226,14 @@ try:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            if event.type == pygame.KEYDOWN and\
+                    event.key == pygame.K_ESCAPE and not(start_screen[1]):
+                # Вновь рисуем стартовое окно в случае, если нажат Esc
+                start_screen[1] = True
         screen.fill(pygame.Color('white'))
+        if start_screen[1]:
+            start_screen[0].draw()
+            start_screen[1] = False
         board_player.render()
         board_bot.render()
         pygame.display.flip()
