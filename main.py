@@ -4,14 +4,16 @@ import sys
 import pygame
 import random
 FPS = 30
+# Обозначения клеток
+SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+           '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
 
 
 # необходимые функции
 def load_image(name):
-    fullname = os.path.join('data', name)
+    fullname = os.path.join('data\images', name)
     # если файл не существует, то выходим
     if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
         sys.exit()
     image = pygame.image.load(fullname)
     return image
@@ -29,16 +31,17 @@ class StartScreen:
     def __init__(self):
         self.fon = pygame.transform.scale(load_image('Battle.jpg'), (width, height))
         self.clock = pygame.time.Clock()
+        self.buttons_pos = []
+        self.intro_text = ["Игра", "",
+                           "Морской бой",
+                           "классический"]
 
     def draw(self):
-        intro_text = ["Игра", "",  # пока написал так, потом можно поправить
-                      "Морской бой",
-                      "классический"]
-
         screen.blit(self.fon, (0, 0))
         font = pygame.font.Font(None, 30)
         text_coord = 50
-        for line in intro_text:
+        for line in self.intro_text:
+            self.buttons_pos.append(text_coord)
             string_rendered = font.render(line, 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
             text_coord += 10
@@ -53,9 +56,18 @@ class StartScreen:
                     terminate()
                 elif event.type == pygame.KEYDOWN or \
                         event.type == pygame.MOUSEBUTTONDOWN:
-                    return  # начинаем игру
+                        return
             pygame.display.flip()
             self.clock.tick(FPS)
+
+
+# на случай ошибок
+class ErrorScreen(StartScreen):
+    def __init__(self):
+        super().__init__()
+        self.intro_text = ['Возникла ошибка',
+                           'Возможно, не хватает некоторых файлов',
+                           'На данный момент играть невозможно!']
 
 
 class SavesScreen:
@@ -98,7 +110,7 @@ class Ships(pygame.sprite.Sprite):
 # классы полей игрока и бота
 # игрока:
 
-class Board_Player:
+class BoardPlayer:
     # создание поля
     def __init__(self, width, height):
         self.width = width
@@ -130,7 +142,7 @@ class Board_Player:
                                   self.cell_size, self.cell_size), 1)
 
 
-class Board_Bot:
+class BoardBot:
     # создание поля
     def __init__(self, width, height):
         self.width = width
@@ -184,7 +196,6 @@ class Ship4(Ships):
 
 
 # инициализация и игроковй цикл
-# !!!Возможно, придется куда-то переносить!!!
 pygame.init()
 size = width, height = 720, 400
 screen = pygame.display.set_mode(size)
@@ -193,11 +204,12 @@ pygame.display.set_caption('Морской бой')
 all_sprites = pygame.sprite.Group()
 start_screen = StartScreen()
 start_screen.draw()
+error = [ErrorScreen, False]
 
-board_player = Board_Player(10, 10)  # потом этот шаг надо оптимизировать
+board_player = BoardPlayer(10, 10)  # потом этот шаг надо оптимизировать
 board_player.set_view(20, 40, 30)
 
-board_bot = Board_Bot(10, 10)
+board_bot = BoardBot(10, 10)
 board_bot.set_view(400, 40, 30)
 
 clock = pygame.time.Clock()
@@ -209,6 +221,9 @@ while running:
         if event.type == pygame.QUIT:
             terminate()
     screen.fill(pygame.Color('white'))
+    #if error[1]:
+     #   error[0].draw()
+    #else:
     board_player.render()
     board_bot.render()
     pygame.display.flip()
