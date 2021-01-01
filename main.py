@@ -12,9 +12,6 @@ SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
 # необходимые функции
 def load_image(name):
     fullname = os.path.join('data\images', name)
-    # если файл не существует, то выходим
-    if not os.path.isfile(fullname):
-        sys.exit()
     image = pygame.image.load(fullname)
     return image
 
@@ -27,14 +24,12 @@ def terminate():
 
 # необходимые классы:
 # класс начальной заставки
-class StartScreen:
+class Screens:
     def __init__(self):
-        self.fon = pygame.transform.scale(load_image('Battle.jpg'), (width, height))
+        self.fon = pygame.Surface((720, 400))
         self.clock = pygame.time.Clock()
         self.buttons_pos = []
-        self.intro_text = ["Игра", "",
-                           "Морской бой",
-                           "классический"]
+        self.intro_text = []
 
     def draw(self):
         screen.blit(self.fon, (0, 0))
@@ -56,15 +51,27 @@ class StartScreen:
                     terminate()
                 elif event.type == pygame.KEYDOWN or \
                         event.type == pygame.MOUSEBUTTONDOWN:
-                        return
+                    return
             pygame.display.flip()
             self.clock.tick(FPS)
 
 
-# на случай ошибок
-class ErrorScreen(StartScreen):
+class StartScreen(Screens):
     def __init__(self):
         super().__init__()
+        self.fon = pygame.transform.scale(load_image('Battle.jpg'),
+                                          (width, height))
+        self.intro_text = ["Игра", "",
+                           "Морской бой",
+                           "классический"]
+
+
+# на случай ошибок
+class ErrorScreen(Screens):
+    def __init__(self):
+        super().__init__()
+        self.fon = pygame.transform.scale(load_image('error.jpg'),
+                                          (width, height))
         self.intro_text = ['Возникла ошибка',
                            'Возможно, не хватает некоторых файлов',
                            'На данный момент играть невозможно!']
@@ -200,31 +207,39 @@ pygame.init()
 size = width, height = 720, 400
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Морской бой')
+error = ErrorScreen()
+try:
+    all_sprites = pygame.sprite.Group()
+    start_screen = StartScreen()
+    start_screen.draw()
 
-all_sprites = pygame.sprite.Group()
-start_screen = StartScreen()
-start_screen.draw()
-error = [ErrorScreen, False]
+    board_player = BoardPlayer(10, 10)  # потом этот шаг надо оптимизировать
+    board_player.set_view(20, 40, 30)
 
-board_player = BoardPlayer(10, 10)  # потом этот шаг надо оптимизировать
-board_player.set_view(20, 40, 30)
+    board_bot = BoardBot(10, 10)
+    board_bot.set_view(400, 40, 30)
 
-board_bot = BoardBot(10, 10)
-board_bot.set_view(400, 40, 30)
-
-clock = pygame.time.Clock()
-# таймер использовать будем при ходе ИИ
-TIMER = pygame.USEREVENT + 1
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            terminate()
-    screen.fill(pygame.Color('white'))
-    #if error[1]:
-     #   error[0].draw()
-    #else:
-    board_player.render()
-    board_bot.render()
-    pygame.display.flip()
-    clock.tick(FPS)
+    clock = pygame.time.Clock()
+    # таймер использовать будем при ходе ИИ
+    TIMER = pygame.USEREVENT + 1
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+        screen.fill(pygame.Color('white'))
+        board_player.render()
+        board_bot.render()
+        pygame.display.flip()
+        clock.tick(FPS)
+except Exception:
+    clock = pygame.time.Clock()
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+        screen.fill(pygame.Color('red'))
+        error.draw()
+        pygame.display.flip()
+        clock.tick(FPS)
