@@ -7,6 +7,8 @@ FPS = 30
 # Обозначения клеток
 SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
            '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+# Состояния кораблей в начале, в клетке (установка кораблей) и в ходе игры
+CONDITIONS = ['free', 'fixed', 'in the game']
 
 
 # необходимые функции
@@ -101,21 +103,8 @@ class Game:
         pass
 
 
-# основной класс для всех кораблей
-class Ships(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__(all_sprites)
-
-    def draw(self):
-        pass
-
-    def update(self):
-        pass
-
-
 # классы полей игрока и бота
 # игрока:
-
 class BoardPlayer:
     # создание поля
     def __init__(self, width, height):
@@ -187,8 +176,6 @@ class BoardBot:
             x = (x - self.left) // self.cell_size - 1
             y = (y - self.top) // self.cell_size - 1
             print((x, y))
-        else:
-            print(None)  # пока просто печатает
 
     def on_click(self, cell_coords):
         pass
@@ -198,30 +185,49 @@ class BoardBot:
         self.on_click(cell)
 
 
+# основной класс для всех кораблей
+class Ships(pygame.sprite.Sprite):
+    def __init__(self, image, x_pos, y_pos, size):
+        super().__init__(all_sprites)
+        self.add(all_sprites)
+        self.image = load_image(image)
+        self.image = pygame.transform.scale(self.image, size)
+        self.condition = 0
+        self.rect = self.image.get_rect()
+        self.rect.x = x_pos
+        self.rect.y = y_pos
+
+    def update(self):
+        if self.condition == 'free' or self.condition == 'fixed':
+            pass
+        else:
+            pass
+
+
 # отдельные классы для каждого типа кораблей
 class Ship1(Ships):
-    def init(self):
-        pass
+    def __init__(self, image, x, y):
+        super().__init__(image, x, y, (30, 30))
 
 
 class Ship2(Ships):
-    def init(self):
-        pass
+    def __init__(self, image, x, y):
+        super().__init__(image, x, y, (61, 30))
 
 
 class Ship3(Ships):
-    def init(self):
-        pass
+    def __init__(self, image, x, y):
+        super().__init__(image, x, y, (92, 30))
 
 
 class Ship4(Ships):
-    def init(self):
-        pass
+    def __init__(self, image, x, y):
+        super().__init__(image, x, y, (123, 30))
 
 
 # инициализация и игроковй цикл
 pygame.init()
-size = width, height = 720, 400
+size = width, height = 720, 500
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Морской бой')
 error = ErrorScreen()
@@ -235,7 +241,32 @@ try:
 
     board_bot = BoardBot(11, 11)
     board_bot.set_view(400, 40, 30)
-
+    # выводим вначале игры выводим все корабли
+    player_ships = []
+    x = 10
+    y = 350
+    # первые
+    for _ in range(4):
+        player_ships.append(Ship1('ship1.png', x, y))
+        x += 35
+    x = 10
+    y += 35
+    # вторые
+    for _ in range(3):
+        player_ships.append(Ship2('ship2.png', x, y))
+        x += 66
+    x = 10
+    y += 35
+    # третьи
+    for _ in range(2):
+        player_ships.append(Ship3('ship3.png', x, y))
+        x += 97
+    x = 10
+    y += 35
+    # четвертые
+    for _ in range(1):
+        player_ships.append(Ship4('ship4.png', x, y))
+        x += 128
     clock = pygame.time.Clock()
     # таймер использовать будем при ходе ИИ
     TIMER = pygame.USEREVENT + 1
@@ -256,9 +287,11 @@ try:
             start_screen[1] = False
         board_player.render()
         board_bot.render()
+        all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
-except Exception:
+except Exception as ex:
+    print(ex)
     clock = pygame.time.Clock()
     running = True
     while running:
