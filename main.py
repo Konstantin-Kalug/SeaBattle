@@ -34,10 +34,12 @@ class Screens:
         self.intro_text = []
 
     def draw(self):
+        # выводим фон на окно
         screen.blit(self.fon, (0, 0))
         font = pygame.font.Font(None, 30)
         text_coord = 50
         for line in self.intro_text:
+            # выводим текст
             self.buttons_pos.append(text_coord)
             string_rendered = font.render(line, 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
@@ -46,7 +48,7 @@ class Screens:
             intro_rect.x = 10
             text_coord += intro_rect.height
             screen.blit(string_rendered, intro_rect)
-
+        # цикл окна
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -73,8 +75,7 @@ class ErrorScreen(Screens):
         super().__init__()
         self.fon = pygame.transform.scale(load_image('error.jpg'),
                                           (width, height))
-        self.intro_text = ['Возникла ошибка',
-                           'Возможно, не хватает некоторых файлов',
+        self.intro_text = ['Возникла ошибка:', '',
                            'На данный момент играть невозможно!']
 
 
@@ -189,16 +190,20 @@ class BoardBot:
 class Ships(pygame.sprite.Sprite):
     def __init__(self, image, x_pos, y_pos, size):
         super().__init__(all_sprites)
+        # добавляем спрайт
         self.add(all_sprites)
         self.size = size
         self.image = load_image(image)
         self.image = pygame.transform.scale(self.image, size)
+        # указываем текущее состояние корабля
         self.condition = CONDITIONS[0]
+        # указываем координаты и размеры спрайта
         self.rect = self.image.get_rect()
         self.rect.x = x_pos
         self.rect.y = y_pos
         self.x = x_pos
         self.y = y_pos
+        # перенос корабля
         self.mouse = False
 
     def update(self):
@@ -208,6 +213,7 @@ class Ships(pygame.sprite.Sprite):
             pass
 
     def move(self, pos):
+        # переносим спрайт
         self.rect.x = pos[0]
         self.rect.y = pos[1]
         self.x = pos[0]
@@ -222,17 +228,17 @@ class Ship1(Ships):
 
 class Ship2(Ships):
     def __init__(self, image, x, y):
-        super().__init__(image, x, y, (61, 30))
+        super().__init__(image, x, y, (60, 30))
 
 
 class Ship3(Ships):
     def __init__(self, image, x, y):
-        super().__init__(image, x, y, (92, 30))
+        super().__init__(image, x, y, (90, 30))
 
 
 class Ship4(Ships):
     def __init__(self, image, x, y):
-        super().__init__(image, x, y, (123, 30))
+        super().__init__(image, x, y, (120, 30))
 
 
 # инициализация и игроковй цикл
@@ -240,15 +246,18 @@ pygame.init()
 size = width, height = 720, 500
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Морской бой')
+# ошибка
 error = ErrorScreen()
 try:
+    # создаем группу спрайтов
     all_sprites = pygame.sprite.Group()
+    # создаем начальный экран
     start_screen = [StartScreen(), False]
     start_screen[0].draw()
-
+    # создаем поле игрока
     board_player = BoardPlayer(11, 11)  # потом этот шаг надо оптимизировать
     board_player.set_view(20, 40, 30)
-
+    # создаем поле бота
     board_bot = BoardBot(11, 11)
     board_bot.set_view(400, 40, 30)
     # выводим вначале игры выводим все корабли
@@ -264,23 +273,24 @@ try:
     # вторые
     for _ in range(3):
         player_ships.append(Ship2('ship2.png', x, y))
-        x += 66
+        x += 65
     x = 10
     y += 35
     # третьи
     for _ in range(2):
         player_ships.append(Ship3('ship3.png', x, y))
-        x += 97
+        x += 95
     x = 10
     y += 35
     # четвертые
     for _ in range(1):
         player_ships.append(Ship4('ship4.png', x, y))
-        x += 128
+        x += 125
     clock = pygame.time.Clock()
     # таймер использовать будем при ходе ИИ
     TIMER = pygame.USEREVENT + 1
     running = True
+    # переменная, отвечающая за перенос
     move = False
     while running:
         for event in pygame.event.get():
@@ -291,7 +301,9 @@ try:
                 # Вновь рисуем стартовое окно в случае, если нажат Esc
                 start_screen[1] = True
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # запоминаем начальные координаты
                 pos0 = event.pos
+                # разрешаем переносить корабли
                 for ship in player_ships:
                     if ship.x <= pos0[0] <= ship.x + ship.size[0] and\
                             ship.y <= pos0[1] <= ship.y + ship.size[1] and\
@@ -301,30 +313,38 @@ try:
                         move = True
                 board_bot.get_click(event.pos)
             if event.type == pygame.MOUSEBUTTONUP:
-                pos0 = event.pos
+                # запрещаем кораблям перемещаться
                 for ship in player_ships:
                     for ship in player_ships:
                         ship.mouse = False
                     move = False
             if event.type == pygame.MOUSEMOTION and move:
+                # считаем изменение координат
                 pos = (event.pos[0] - pos0[0], event.pos[1] - pos0[1])
+                # переносим координаты
                 for ship in player_ships:
                     if ship.mouse:
                         ship.move((ship.x + pos[0], ship.y + pos[1]))
+                # запоминаем новые координаты
                 pos0 = event.pos
         screen.fill(pygame.Color('white'))
+        # выводим начальный экран
         if start_screen[1]:
             start_screen[0].draw()
             start_screen[1] = False
+        # выводим поля
         board_player.render()
         board_bot.render()
+        # выводим спрайты
         all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
 except Exception as ex:
-    print(ex)
+    # Указываем ошибку
+    error.intro_text[1] = str(ex)
     clock = pygame.time.Clock()
     running = True
+    # цикл выводит ошибку на экран
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
