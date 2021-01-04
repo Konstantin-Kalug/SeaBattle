@@ -24,6 +24,33 @@ def terminate():
     sys.exit()
 
 
+def add_ships():
+    x = 10
+    y = 350
+    # первые
+    for _ in range(4):
+        player_ships.append(Ship1('ship1.png', x, y))
+        x += 35
+    x = 10
+    y += 35
+    # вторые
+    for _ in range(3):
+        player_ships.append(Ship2('ship2.png', x, y))
+        x += 65
+    x = 10
+    y += 35
+    # третьи
+    for _ in range(2):
+        player_ships.append(Ship3('ship3.png', x, y))
+        x += 95
+    x = 10
+    y += 35
+    # четвертые
+    for _ in range(1):
+        player_ships.append(Ship4('ship4.png', x, y))
+        x += 125
+
+
 # необходимые классы:
 # класс начальной заставки
 class Screens:
@@ -137,6 +164,21 @@ class BoardPlayer:
                                   y * self.cell_size + self.top + self.cell_size,
                                   self.cell_size, self.cell_size), 1)
 
+    def get_cell(self, mouse_pos):
+        x, y = mouse_pos
+        if (self.left + self.cell_size < x < self.left + self.width * self.cell_size and
+                self.top + self.cell_size < y < self.top + self.height * self.cell_size):
+            x = (x - self.left) // self.cell_size - 1
+            y = (y - self.top) // self.cell_size - 1
+            return x, y
+
+    def on_click(self, cell_coords):
+        pass
+
+    def get_click(self, mouse_pos):
+        cell = self.get_cell(mouse_pos)
+        self.on_click(cell)
+
 
 # бота:
 class BoardBot:
@@ -192,7 +234,7 @@ class Ships(pygame.sprite.Sprite):
         super().__init__(all_sprites)
         # добавляем спрайт
         self.add(all_sprites)
-        self.size = size
+        self.size = list(size)
         self.image = load_image(image)
         self.image = pygame.transform.scale(self.image, size)
         # указываем текущее состояние корабля
@@ -206,11 +248,11 @@ class Ships(pygame.sprite.Sprite):
         # перенос корабля
         self.mouse = False
 
-    def update(self):
-        if self.condition == 'free' or self.condition == 'fixed':
-            pass
-        else:
-            pass
+    def update(self, event):
+        if event == 'rotate':
+            # поворачиваем прямоугольник спрайта
+            self.rect.width, self.rect.height = self.rect.height, self.rect.width
+            self.size[0], self.size[1] = self.size[1], self.size[0]
 
     def move(self, pos):
         # переносим спрайт
@@ -260,38 +302,15 @@ try:
     # создаем поле бота
     board_bot = BoardBot(11, 11)
     board_bot.set_view(400, 40, 30)
-    # выводим вначале игры выводим все корабли
     player_ships = []
-    x = 10
-    y = 350
-    # первые
-    for _ in range(4):
-        player_ships.append(Ship1('ship1.png', x, y))
-        x += 35
-    x = 10
-    y += 35
-    # вторые
-    for _ in range(3):
-        player_ships.append(Ship2('ship2.png', x, y))
-        x += 65
-    x = 10
-    y += 35
-    # третьи
-    for _ in range(2):
-        player_ships.append(Ship3('ship3.png', x, y))
-        x += 95
-    x = 10
-    y += 35
-    # четвертые
-    for _ in range(1):
-        player_ships.append(Ship4('ship4.png', x, y))
-        x += 125
+    add_ships()
     clock = pygame.time.Clock()
     # таймер использовать будем при ходе ИИ
     TIMER = pygame.USEREVENT + 1
     running = True
     # переменная, отвечающая за перенос
     move = False
+    rotate = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -300,6 +319,13 @@ try:
                 event.key == pygame.K_ESCAPE and not(start_screen[1]):
                 # Вновь рисуем стартовое окно в случае, если нажат Esc
                 start_screen[1] = True
+            # поворачиваем
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                for ship in player_ships:
+                    if ship.mouse and move:
+                        ship.image = pygame.transform.rotate(ship.image, 90)
+                        ship.update('rotate')
+                        rotate = True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # запоминаем начальные координаты
                 pos0 = event.pos
@@ -312,7 +338,7 @@ try:
                         ship.mouse = True
                         move = True
                 board_bot.get_click(event.pos)
-            if event.type == pygame.MOUSEBUTTONUP:
+            if event.type == pygame.MOUSEBUTTONUP and not(rotate):
                 # запрещаем кораблям перемещаться
                 for ship in player_ships:
                     for ship in player_ships:
@@ -327,6 +353,7 @@ try:
                         ship.move((ship.x + pos[0], ship.y + pos[1]))
                 # запоминаем новые координаты
                 pos0 = event.pos
+                rotate = False
         screen.fill(pygame.Color('white'))
         # выводим начальный экран
         if start_screen[1]:
