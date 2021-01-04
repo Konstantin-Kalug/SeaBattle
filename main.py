@@ -7,7 +7,7 @@ FPS = 30
 # Обозначения клеток
 SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
            '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-# Состояния кораблей в начале, в клетке (установка кораблей) и в ходе игры
+# Состояния кораблей в начале, при установки, в ходе игры
 CONDITIONS = ['free', 'fixed', 'in the game']
 
 
@@ -190,18 +190,28 @@ class Ships(pygame.sprite.Sprite):
     def __init__(self, image, x_pos, y_pos, size):
         super().__init__(all_sprites)
         self.add(all_sprites)
+        self.size = size
         self.image = load_image(image)
         self.image = pygame.transform.scale(self.image, size)
-        self.condition = 0
+        self.condition = CONDITIONS[0]
         self.rect = self.image.get_rect()
         self.rect.x = x_pos
         self.rect.y = y_pos
+        self.x = x_pos
+        self.y = y_pos
+        self.mouse = False
 
     def update(self):
         if self.condition == 'free' or self.condition == 'fixed':
             pass
         else:
             pass
+
+    def move(self, pos):
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
+        self.x = pos[0]
+        self.y = pos[1]
 
 
 # отдельные классы для каждого типа кораблей
@@ -271,6 +281,7 @@ try:
     # таймер использовать будем при ходе ИИ
     TIMER = pygame.USEREVENT + 1
     running = True
+    move = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -280,7 +291,27 @@ try:
                 # Вновь рисуем стартовое окно в случае, если нажат Esc
                 start_screen[1] = True
             if event.type == pygame.MOUSEBUTTONDOWN:
+                pos0 = event.pos
+                for ship in player_ships:
+                    if ship.x <= pos0[0] <= ship.x + ship.size[0] and\
+                            ship.y <= pos0[1] <= ship.y + ship.size[1] and\
+                            (ship.condition == 'free' or
+                             ship.condition == 'fixed'):
+                        ship.mouse = True
+                        move = True
                 board_bot.get_click(event.pos)
+            if event.type == pygame.MOUSEBUTTONUP:
+                pos0 = event.pos
+                for ship in player_ships:
+                    for ship in player_ships:
+                        ship.mouse = False
+                    move = False
+            if event.type == pygame.MOUSEMOTION and move:
+                pos = (event.pos[0] - pos0[0], event.pos[1] - pos0[1])
+                for ship in player_ships:
+                    if ship.mouse:
+                        ship.move((ship.x + pos[0], ship.y + pos[1]))
+                pos0 = event.pos
         screen.fill(pygame.Color('white'))
         if start_screen[1]:
             start_screen[0].draw()
