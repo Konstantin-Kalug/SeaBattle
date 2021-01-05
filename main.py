@@ -73,8 +73,8 @@ class StartScreen(Screens):
 class ErrorScreen(Screens):
     def __init__(self):
         super().__init__()
-        self.fon = pygame.transform.scale(load_image('error.jpg'),
-                                          (width, height))
+        self.fon = pygame.Surface((width, height))
+        pygame.draw.rect(self.fon, (255, 0, 0), (0, 0, width, height), 0)
         self.intro_text = ['Возникла ошибка:', '',
                            'На данный момент играть невозможно!']
 
@@ -88,6 +88,7 @@ class Game:
         self.start_screen[0].draw()
         self.move = False
         self.rotate = False
+        self.pos0 = (0, 0)
         self.start_game()
 
     def draw(self):
@@ -119,6 +120,45 @@ class Game:
         self.board_player = BoardPlayer(11, 11)
         self.board_player.set_view(20, 40, 30)
         self.add_ships()
+
+    def rotate_ships(self):
+        for ship in game.player_ships:
+            if ship.mouse and game.move:
+                ship.image = pygame.transform.rotate(ship.image, 90)
+                ship.update('rotate')
+                game.rotate = True
+
+    def start_of_the_transport_ships(self):
+        # запоминаем начальные координаты
+        self.pos0 = event.pos
+        # разрешаем переносить корабли
+        for ship in self.player_ships:
+            if ship.x <= self.pos0[0] <= ship.x + ship.size[0] and \
+                    ship.y <= self.pos0[1] <= ship.y + ship.size[1] and \
+                    (ship.condition == 'free' or
+                     ship.condition == 'fixed'):
+                ship.mouse = True
+                self.move = True
+
+    def no_move_ships(self):
+        # запрещаем кораблям перемещаться
+        for ship in self.player_ships:
+            for ship in self.player_ships:
+                ship.mouse = False
+                ship.update('move')
+            self.move = False
+
+    def fixing_ships(self, pos):
+        # считаем изменение координат
+        pos = (pos[0] - self.pos0[0], pos[1] - self.pos0[1])
+        # переносим координаты
+        for ship in self.player_ships:
+            if ship.mouse:
+                ship.move((ship.x + pos[0], ship.y + pos[1]))
+        # запоминаем новые координаты
+        self.pos0 = event.pos
+        self.rotate = False
+
 
     def ai_move(self):
         pass
@@ -325,40 +365,14 @@ try:
                 game.start_screen[1] = True
             # поворачиваем
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                for ship in game.player_ships:
-                    if ship.mouse and game.move:
-                        ship.image = pygame.transform.rotate(ship.image, 90)
-                        ship.update('rotate')
-                        game.rotate = True
+                game.rotate_ships()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # запоминаем начальные координаты
-                pos0 = event.pos
-                # разрешаем переносить корабли
-                for ship in game.player_ships:
-                    if ship.x <= pos0[0] <= ship.x + ship.size[0] and\
-                            ship.y <= pos0[1] <= ship.y + ship.size[1] and\
-                            (ship.condition == 'free' or
-                             ship.condition == 'fixed'):
-                        ship.mouse = True
-                        game.move = True
+                game.start_of_the_transport_ships()
                 game.board_bot.get_click(event.pos)
             if event.type == pygame.MOUSEBUTTONUP and not(game.rotate):
-                # запрещаем кораблям перемещаться
-                for ship in game.player_ships:
-                    for ship in game.player_ships:
-                        ship.mouse = False
-                        ship.update('move')
-                    game.move = False
+                game.no_move_ships()
             if event.type == pygame.MOUSEMOTION and game.move:
-                # считаем изменение координат
-                pos = (event.pos[0] - pos0[0], event.pos[1] - pos0[1])
-                # переносим координаты
-                for ship in game.player_ships:
-                    if ship.mouse:
-                        ship.move((ship.x + pos[0], ship.y + pos[1]))
-                # запоминаем новые координаты
-                pos0 = event.pos
-                game.rotate = False
+                game.fixing_ships(event.pos)
         game.draw()
         pygame.display.flip()
         clock.tick(FPS)
