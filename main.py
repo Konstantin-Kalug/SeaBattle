@@ -89,6 +89,7 @@ class Game:
         self.move = False
         self.rotate = False
         self.pos0 = (0, 0)
+        self.pos_mouse = None
         self.start_game()
 
     def draw(self):
@@ -119,7 +120,6 @@ class Game:
         self.board_bot.set_view(400, 40, 30)
         self.board_player = BoardPlayer(11, 11)
         self.board_player.set_view(20, 40, 30)
-        self.add_ships()
 
     def rotate_ships(self):
         for ship in game.player_ships:
@@ -139,14 +139,15 @@ class Game:
                      ship.condition == 'fixed'):
                 ship.mouse = True
                 self.move = True
+                ship.condition = CONDITIONS[0]
 
     def no_move_ships(self):
         # запрещаем кораблям перемещаться
         for ship in self.player_ships:
-            for ship in self.player_ships:
+            if ship.mouse:
                 ship.mouse = False
                 ship.update('move')
-            self.move = False
+                self.move = False
 
     def fixing_ships(self, pos):
         # считаем изменение координат
@@ -192,7 +193,7 @@ class Game:
 
 # классы полей игрока и бота
 # игрока:
-class BoardPlayer:
+class BoardPlayer():
     # создание поля
     def __init__(self, width, height):
         self.width = width
@@ -230,13 +231,6 @@ class BoardPlayer:
             x = (x - self.left) // self.cell_size - 1
             y = (y - self.top) // self.cell_size - 1
             return x, y
-
-    def on_click(self, cell_coords):
-        pass
-
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        self.on_click(cell)
 
 
 # бота:
@@ -293,6 +287,7 @@ class Ships(pygame.sprite.Sprite):
         super().__init__(group)
         # добавляем спрайт
         self.add(group)
+        self.group = group
         self.size = list(size)
         self.image = load_image(image)
         self.image = pygame.transform.scale(self.image, size)
@@ -313,7 +308,22 @@ class Ships(pygame.sprite.Sprite):
             self.rect.width, self.rect.height = self.rect.height, self.rect.width
             self.size[0], self.size[1] = self.size[1], self.size[0]
         elif event == 'move':
-            pass
+            if game.pos_mouse:
+                new_x = game.board_player.left + game.board_player.cell_size *\
+                        (game.pos_mouse[0] + 1)
+                new_y = game.board_player.top + game.board_player.cell_size *\
+                        (game.pos_mouse[1] + 1)
+                self.rect.x = new_x
+                self.rect.y = new_y
+                if pygame.sprite.spritecollideany(self, self.group) and\
+                        game.board_player.get_cell((self.rect.x + self.rect.width,
+                                                self.rect.y + self.rect.height)):
+                    self.condition = CONDITIONS[1]
+                    self.x = new_x
+                    self.y = new_y
+                else:
+                    self.rect.x = self.x
+                    self.rect.y = self.y
 
     def move(self, pos):
         # переносим спрайт
@@ -370,6 +380,7 @@ try:
                 game.start_of_the_transport_ships()
                 game.board_bot.get_click(event.pos)
             if event.type == pygame.MOUSEBUTTONUP and not(game.rotate):
+                game.pos_mouse = game.board_player.get_cell(event.pos)
                 game.no_move_ships()
             if event.type == pygame.MOUSEMOTION and game.move:
                 game.fixing_ships(event.pos)
