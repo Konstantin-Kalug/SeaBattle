@@ -160,7 +160,6 @@ class Game:
         self.pos0 = event.pos
         self.rotate = False
 
-
     def ai_move(self):
         pass
 
@@ -193,7 +192,7 @@ class Game:
 
 # классы полей игрока и бота
 # игрока:
-class BoardPlayer():
+class BoardPlayer:
     # создание поля
     def __init__(self, width, height):
         self.width = width
@@ -313,17 +312,26 @@ class Ships(pygame.sprite.Sprite):
                         (game.pos_mouse[0] + 1)
                 new_y = game.board_player.top + game.board_player.cell_size *\
                         (game.pos_mouse[1] + 1)
-                self.rect.x = new_x
-                self.rect.y = new_y
-                if pygame.sprite.spritecollideany(self, self.group) and\
-                        game.board_player.get_cell((self.rect.x + self.rect.width,
+                self.rect.x = new_x - 30
+                self.rect.y = new_y - 30
+                self.rect.width += 60
+                self.rect.height += 60
+                if pygame.sprite.spritecollide(self, self.group, False) == [self]:
+                    self.rect.x += 30
+                    self.rect.y += 30
+                    self.rect.width -= 60
+                    self.rect.height -= 60
+                    if game.board_player.get_cell((self.rect.x + self.rect.width,
                                                 self.rect.y + self.rect.height)):
-                    self.condition = CONDITIONS[1]
-                    self.x = new_x
-                    self.y = new_y
-                else:
-                    self.rect.x = self.x
-                    self.rect.y = self.y
+                        self.condition = CONDITIONS[1]
+                        self.x = new_x
+                        self.y = new_y
+                        return 0
+                self.rect.x = self.x
+                self.rect.y = self.y
+                self.rect.width = self.size[0]
+                self.rect.height = self.size[1]
+                self.condition = CONDITIONS[0]
 
     def move(self, pos):
         # переносим спрайт
