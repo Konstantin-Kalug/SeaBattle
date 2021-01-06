@@ -3,6 +3,7 @@ import os
 import sys
 import pygame
 import random
+
 FPS = 30
 # Обозначения клеток
 SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
@@ -22,6 +23,33 @@ def terminate():
     # ***Сохранение игры***
     pygame.quit()
     sys.exit()
+
+
+def add_ships():
+    x = 10
+    y = 350
+    # первые
+    for _ in range(4):
+        player_ships.append(Ship1('ship1.png', x, y))
+        x += 35
+    x = 10
+    y += 35
+    # вторые
+    for _ in range(3):
+        player_ships.append(Ship2('ship2.png', x, y))
+        x += 65
+    x = 10
+    y += 35
+    # третьи
+    for _ in range(2):
+        player_ships.append(Ship3('ship3.png', x, y))
+        x += 95
+    x = 10
+    y += 35
+    # четвертые
+    for _ in range(1):
+        player_ships.append(Ship4('ship4.png', x, y))
+        x += 125
 
 
 # необходимые классы:
@@ -73,121 +101,35 @@ class StartScreen(Screens):
 class ErrorScreen(Screens):
     def __init__(self):
         super().__init__()
-        self.fon = pygame.Surface((width, height))
-        pygame.draw.rect(self.fon, (255, 0, 0), (0, 0, width, height), 0)
+        self.fon = pygame.transform.scale(load_image('error.jpg'),
+                                          (width, height))
         self.intro_text = ['Возникла ошибка:', '',
                            'На данный момент играть невозможно!']
 
 
+class SavesScreen:
+    def __init__(self):
+        pass
+
+
+class SettingScreen:
+    def __init__(self):
+        pass
+
+
 # класс самой игры
 class Game:
-    def __init__(self):
-        # создаем начальный экран
-        self.error = ErrorScreen()
-        self.start_screen = [StartScreen(), False]
-        self.start_screen[0].draw()
-        self.move = False
-        self.rotate = False
-        self.pos0 = (0, 0)
-        self.start_game()
+    def __init__(self, save=None):
+        if save is None:
+            pass
+        else:
+            pass
 
     def draw(self):
-        screen.fill(pygame.Color('white'))
-        # выводим начальный экран
-        if self.start_screen[1]:
-            self.start_screen[0].draw()
-            self.start_game()
-            self.start_screen[1] = False
-        # выводим поля
-        self.board_player.render()
-        self.board_bot.render()
-        # выводим спрайты
-        self.group.draw(screen)
-
-    def draw_error(self):
-        # Указываем ошибку
-        self.error.intro_text[1] = str(ex)
-        screen.fill(pygame.Color('red'))
-        self.error.draw()
-
-    def start_game(self):
-        # перезапуск игры
-        self.group = pygame.sprite.Group()
-        self.player_ships = []
-        self.add_ships()
-        self.board_bot = BoardBot(11, 11)
-        self.board_bot.set_view(400, 40, 30)
-        self.board_player = BoardPlayer(11, 11)
-        self.board_player.set_view(20, 40, 30)
-        self.add_ships()
-
-    def rotate_ships(self):
-        for ship in game.player_ships:
-            if ship.mouse and game.move:
-                ship.image = pygame.transform.rotate(ship.image, 90)
-                ship.update('rotate')
-                game.rotate = True
-
-    def start_of_the_transport_ships(self):
-        # запоминаем начальные координаты
-        self.pos0 = event.pos
-        # разрешаем переносить корабли
-        for ship in self.player_ships:
-            if ship.x <= self.pos0[0] <= ship.x + ship.size[0] and \
-                    ship.y <= self.pos0[1] <= ship.y + ship.size[1] and \
-                    (ship.condition == 'free' or
-                     ship.condition == 'fixed'):
-                ship.mouse = True
-                self.move = True
-
-    def no_move_ships(self):
-        # запрещаем кораблям перемещаться
-        for ship in self.player_ships:
-            for ship in self.player_ships:
-                ship.mouse = False
-                ship.update('move')
-            self.move = False
-
-    def fixing_ships(self, pos):
-        # считаем изменение координат
-        pos = (pos[0] - self.pos0[0], pos[1] - self.pos0[1])
-        # переносим координаты
-        for ship in self.player_ships:
-            if ship.mouse:
-                ship.move((ship.x + pos[0], ship.y + pos[1]))
-        # запоминаем новые координаты
-        self.pos0 = event.pos
-        self.rotate = False
-
+        pass
 
     def ai_move(self):
         pass
-
-    def add_ships(self):
-        x = 10
-        y = 350
-        # первые
-        for _ in range(4):
-            self.player_ships.append(Ship1('ship1.png', x, y, self.group))
-            x += 35
-        x = 10
-        y += 35
-        # вторые
-        for _ in range(3):
-            self.player_ships.append(Ship2('ship2.png', x, y, self.group))
-            x += 65
-        x = 10
-        y += 35
-        # третьи
-        for _ in range(2):
-            self.player_ships.append(Ship3('ship3.png', x, y, self.group))
-            x += 95
-        x = 10
-        y += 35
-        # четвертые
-        for _ in range(1):
-            self.player_ships.append(Ship4('ship4.png', x, y, self.group))
-            x += 125
 
 
 # классы полей игрока и бота
@@ -214,8 +156,8 @@ class BoardPlayer:
             for y in range(self.height - 1):
                 pygame.draw.rect(screen, pygame.Color('black'),
                                  (x * self.cell_size + self.left,
-                                 y * self.cell_size + self.top,
-                                 self.cell_size, self.cell_size), 1)
+                                  y * self.cell_size + self.top,
+                                  self.cell_size, self.cell_size), 1)
         for x in range(self.width - 2):
             for y in range(self.height - 2):
                 pygame.draw.rect(screen, pygame.Color('blue'),
@@ -262,8 +204,8 @@ class BoardBot:
             for y in range(self.height - 1):
                 pygame.draw.rect(screen, pygame.Color('black'),
                                  (x * self.cell_size + self.left,
-                                 y * self.cell_size + self.top,
-                                 self.cell_size, self.cell_size), 1)
+                                  y * self.cell_size + self.top,
+                                  self.cell_size, self.cell_size), 1)
         for x in range(self.width - 2):
             for y in range(self.height - 2):
                 pygame.draw.rect(screen, pygame.Color('blue'),
@@ -289,10 +231,10 @@ class BoardBot:
 
 # основной класс для всех кораблей
 class Ships(pygame.sprite.Sprite):
-    def __init__(self, image, x_pos, y_pos, size, group):
-        super().__init__(group)
+    def __init__(self, image, x_pos, y_pos, size):
+        super().__init__(all_sprites)
         # добавляем спрайт
-        self.add(group)
+        self.add(all_sprites)
         self.size = list(size)
         self.image = load_image(image)
         self.image = pygame.transform.scale(self.image, size)
@@ -312,8 +254,6 @@ class Ships(pygame.sprite.Sprite):
             # поворачиваем прямоугольник спрайта
             self.rect.width, self.rect.height = self.rect.height, self.rect.width
             self.size[0], self.size[1] = self.size[1], self.size[0]
-        elif event == 'move':
-            pass
 
     def move(self, pos):
         # переносим спрайт
@@ -325,23 +265,41 @@ class Ships(pygame.sprite.Sprite):
 
 # отдельные классы для каждого типа кораблей
 class Ship1(Ships):
-    def __init__(self, image, x, y, group):
-        super().__init__(image, x, y, (30, 30), group)
+    def __init__(self, image, x, y):
+        super().__init__(image, x, y, (30, 30))
+        self.lives = 1  # жизни, будут учитываться при попадании
 
 
 class Ship2(Ships):
-    def __init__(self, image, x, y, group):
-        super().__init__(image, x, y, (60, 30), group)
+    def __init__(self, image, x, y):
+        super().__init__(image, x, y, (60, 30))
+        self.lives = 2
 
 
 class Ship3(Ships):
-    def __init__(self, image, x, y, group):
-        super().__init__(image, x, y, (90, 30), group)
+    def __init__(self, image, x, y):
+        super().__init__(image, x, y, (90, 30))
+        self.lives = 3
 
 
 class Ship4(Ships):
-    def __init__(self, image, x, y, group):
-        super().__init__(image, x, y, (120, 30), group)
+    def __init__(self, image, x, y):
+        super().__init__(image, x, y, (120, 30))
+        self.lives = 4
+
+
+def set_enemy_map():
+    map = enemy_map
+    col = 0  # количество выставленных кораблей
+    while col != 4:
+        try:
+            x, y = random.randrange(1, 8), random.randrange(1, 8)
+            if map[y][x] == '.':
+                if map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.':
+                    map[y][x] = '@'
+                    col += 1
+        except IndexError:
+            pass
 
 
 # инициализация и игроковй цикл
@@ -349,34 +307,90 @@ pygame.init()
 size = width, height = 720, 500
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Морской бой')
-game = Game()
+enemy_map = [['.' for _ in range(8)] for _ in range(8)]
+set_enemy_map()    # инициализация расположения кораблей противника
+
+# ошибка
+error = ErrorScreen()
 try:
+    # создаем группу спрайтов
+    all_sprites = pygame.sprite.Group()
+    # создаем начальный экран
+    start_screen = [StartScreen(), False]
+    start_screen[0].draw()
+    # создаем поле игрока
+    board_player = BoardPlayer(10, 10)  # потом этот шаг надо оптимизировать
+    board_player.set_view(20, 40, 30)
+    # создаем поле бота
+    board_bot = BoardBot(10, 10)
+    board_bot.set_view(400, 40, 30)
+    player_ships = []
+    add_ships()
     clock = pygame.time.Clock()
     # таймер использовать будем при ходе ИИ
     TIMER = pygame.USEREVENT + 1
     running = True
+    # переменная, отвечающая за перенос
+    move = False
+    rotate = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            if event.type == pygame.KEYDOWN and\
-                event.key == pygame.K_ESCAPE and not(game.start_screen[1]):
+            if event.type == pygame.KEYDOWN and \
+                    event.key == pygame.K_ESCAPE and not (start_screen[1]):
                 # Вновь рисуем стартовое окно в случае, если нажат Esc
-                game.start_screen[1] = True
+                start_screen[1] = True
             # поворачиваем
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                game.rotate_ships()
+                for ship in player_ships:
+                    if ship.mouse and move:
+                        ship.image = pygame.transform.rotate(ship.image, 90)
+                        ship.update('rotate')
+                        rotate = True
             if event.type == pygame.MOUSEBUTTONDOWN:
-                game.start_of_the_transport_ships()
-                game.board_bot.get_click(event.pos)
-            if event.type == pygame.MOUSEBUTTONUP and not(game.rotate):
-                game.no_move_ships()
-            if event.type == pygame.MOUSEMOTION and game.move:
-                game.fixing_ships(event.pos)
-        game.draw()
+                # запоминаем начальные координаты
+                pos0 = event.pos
+                # разрешаем переносить корабли
+                for ship in player_ships:
+                    if ship.x <= pos0[0] <= ship.x + ship.size[0] and \
+                            ship.y <= pos0[1] <= ship.y + ship.size[1] and \
+                            (ship.condition == 'free' or
+                             ship.condition == 'fixed'):
+                        ship.mouse = True
+                        move = True
+                board_bot.get_click(event.pos)
+            if event.type == pygame.MOUSEBUTTONUP and not (rotate):
+                # запрещаем кораблям перемещаться
+                for ship in player_ships:
+                    for ship in player_ships:
+                        ship.mouse = False
+                    move = False
+            if event.type == pygame.MOUSEMOTION and move:
+                # считаем изменение координат
+                pos = (event.pos[0] - pos0[0], event.pos[1] - pos0[1])
+                # переносим координаты
+                for ship in player_ships:
+                    if ship.mouse:
+                        ship.move((ship.x + pos[0], ship.y + pos[1]))
+                # запоминаем новые координаты
+                pos0 = event.pos
+                rotate = False
+        screen.fill(pygame.Color('white'))
+        # выводим начальный экран
+        if start_screen[1]:
+            start_screen[0].draw()
+            start_screen[1] = False
+        # выводим поля
+        board_player.render()
+        board_bot.render()
+        # выводим спрайты
+        all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
 except Exception as ex:
+    # Указываем ошибку
+    error.intro_text[1] = str(ex)
     clock = pygame.time.Clock()
     running = True
     # цикл выводит ошибку на экран
@@ -384,6 +398,7 @@ except Exception as ex:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-        game.draw_error()
+        screen.fill(pygame.Color('red'))
+        error.draw()
         pygame.display.flip()
         clock.tick(FPS)
