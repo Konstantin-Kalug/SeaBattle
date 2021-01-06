@@ -30,8 +30,8 @@ class Screens:
     def __init__(self):
         self.fon = pygame.Surface((720, 400))
         self.clock = pygame.time.Clock()
-        self.buttons_pos = []
         self.intro_text = []
+        self.btns = []
 
     def draw(self):
         # выводим фон на окно
@@ -40,7 +40,6 @@ class Screens:
         text_coord = 50
         for line in self.intro_text:
             # выводим текст
-            self.buttons_pos.append(text_coord)
             string_rendered = font.render(line, 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
             text_coord += 10
@@ -54,7 +53,14 @@ class Screens:
                 if event.type == pygame.QUIT:
                     terminate()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    return
+                    for btn in self.btns:
+                        if btn.x <= event.pos[0] <= btn.x + btn.w and \
+                                btn.y <= event.pos[1] <= btn.y + btn.h:
+                            result = btn.run()
+                            if not(result is None):
+                                return
+            for btn in self.btns:
+                screen.blit(btn.text, (btn.x, btn.y))
             pygame.display.flip()
             self.clock.tick(FPS)
 
@@ -65,8 +71,8 @@ class StartScreen(Screens):
         self.fon = pygame.transform.scale(load_image('Battle.jpg'),
                                           (width, height))
         self.intro_text = ["Игра", "",
-                           "Морской бой",
-                           "классический"]
+                           "Морской бой"]
+        self.btns.append(ClassicButton('классический', 10, 150))
 
 
 # на случай ошибок
@@ -79,6 +85,34 @@ class ErrorScreen(Screens):
                            'На данный момент играть невозможно!']
 
 
+# класс для всех кнопок в игре (пока только как надписи)
+class Buttons:
+    def __init__(self, text_btn, x, y):
+        self.font = pygame.font.Font(None, 30)
+        self.text = self.font.render(text_btn, 1, (0, 0, 255))
+        self.x = x
+        self.y = y
+        self.w = self.text.get_width()
+        self.h = self.text.get_height()
+
+    def run(self):
+        pass
+
+
+class StartButton(Buttons):
+    def run(self):
+        for ship in game.player_ships:
+            if ship.condition == CONDITIONS[0]:
+                return
+        game.game = True
+        game.start_battle()
+
+
+class ClassicButton(Buttons):
+    def run(self):
+        return 0
+
+
 # класс самой игры
 class Game:
     def __init__(self):
@@ -89,13 +123,23 @@ class Game:
         self.move = False
         self.rotate = False
         self.pos0 = (0, 0)
+        self.game = False
         self.pos_mouse = None
+        self.start_btn = [StartButton('Начать игру', 297, 10), False]
+        self.buttons = [self.start_btn]
         self.start_game()
 
+    def start_battle(self):
+        for ship in self.player_ships:
+            ship.condition = CONDITIONS[2]
+        self.start_btn[1] = False
+
     def draw(self):
+        self.start_btn[1] = True
         screen.fill(pygame.Color('white'))
         # выводим начальный экран
         if self.start_screen[1]:
+            self.start_btn[1] = False
             self.start_screen[0].draw()
             self.start_game()
             self.start_screen[1] = False
@@ -104,6 +148,9 @@ class Game:
         self.board_bot.render()
         # выводим спрайты
         self.group.draw(screen)
+        for btn in self.buttons:
+            if btn[1]:
+                screen.blit(btn[0].text, (btn[0].x, btn[0].y))
 
     def draw_error(self):
         # Указываем ошибку
@@ -386,7 +433,14 @@ try:
                 game.rotate_ships()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 game.start_of_the_transport_ships()
-                game.board_bot.get_click(event.pos)
+                if game.game:
+                    game.board_bot.get_click(event.pos)
+                else:
+                    if game.start_btn[0].x <= event.pos[0] <= \
+                            game.start_btn[0].x + game.start_btn[0].w and \
+                            game.start_btn[0].y <= event.pos[1] <= \
+                            game.start_btn[0].y + game.start_btn[0].h:
+                        game.start_btn[0].run()
             if event.type == pygame.MOUSEBUTTONUP and not(game.rotate):
                 game.pos_mouse = game.board_player.get_cell(event.pos)
                 game.no_move_ships()
