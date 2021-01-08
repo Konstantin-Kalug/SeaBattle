@@ -213,7 +213,7 @@ class Game:
 
     def add_ships(self):
         x = 10
-        y = 350
+        y = 380
         # первые
         for _ in range(4):
             self.player_ships.append(Ship1('ship1.png', x, y, self.group))
@@ -314,11 +314,11 @@ class BoardBot:
 
     def get_cell(self, mouse_pos):
         x, y = mouse_pos
-        if (self.left + self.cell_size < x < self.left + self.width * self.cell_size and
-                self.top + self.cell_size < y < self.top + self.height * self.cell_size):
+        if (self.left + self.cell_size < x < self.left + (self.width - 1) * self.cell_size and
+                self.top + self.cell_size < y < self.top + (self.height - 1) * self.cell_size):
             x = (x - self.left) // self.cell_size - 1
             y = (y - self.top) // self.cell_size - 1
-            print((x, y))
+            print(x, y)
 
     def on_click(self, cell_coords):
         pass
@@ -433,7 +433,7 @@ def set_enemy_map():
     # первые
     while col != 4:
         try:
-            x, y = random.randrange(1, 8), random.randrange(1, 8)
+            x, y = random.randrange(0, 9), random.randrange(0, 9)
             if map[y][x] == '.':
                 if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.' and
                         map[y - 1][x - 1] == '.' and map[y + 1][x + 1] == '.' and
@@ -442,13 +442,12 @@ def set_enemy_map():
                     col += 1
         except IndexError:
             pass
-
     # вторые
     col = 0
     while col != 3:
         try:
             direct = random.choice(direction)
-            x, y = random.randrange(1, 7), random.randrange(1, 7)
+            x, y = random.randrange(0, 8), random.randrange(0, 8)
             if map[y][x] == '.':
                 if direct == 'right':
                     if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.'
@@ -466,47 +465,43 @@ def set_enemy_map():
                         col += 1
         except IndexError:
             pass
-
+        except ValueError:
+            return_command = True
     # третьи
     col = 0
     while col != 2:
         try:
             direct = random.choice(direction)
-            x, y = random.randrange(1, 6), random.randrange(1, 6)
+            x, y = random.randrange(0, 7), random.randrange(0, 7)
             if map[y][x] == '.':
                 if direct == 'right':
-                    if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.'
-                            and map[y - 1][x + 1] == '.' and map[y + 1][x + 1] == '.'
+                    if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.'                                and map[y - 1][x + 1] == '.' and map[y + 1][x + 1] == '.'
                             and map[y - 1][x + 2] == '.' and map[y + 1][x + 1] == '.' and map[y][x + 3] == '.'
-
                             and map[y - 1][x - 1] == '.' and map[y + 1][x - 1] == '.'
                             and map[y + 1][x + 3] == '.' and map[y - 1][x + 3] == '.'):
                         map[y][x], map[y][x + 1], map[y][x + 2] = '3', '3', '3'
                         col += 1
-
                 elif direct == 'down':
                     if (map[y + 1][x] == '.' and map[y][x + 1] == '.' and map[y][x - 1] == '.'
                             and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.'
                             and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.' and map[y + 3][x] == '.'
-
                             and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
                             and map[y + 3][x - 1] == '.' and map[y + 3][x + 1] == '.'):
                         map[y][x], map[y + 1][x], map[y + 2][x] = '3', '3', '3'
                         col += 1
         except IndexError:
             pass
-
     # четвёртый
 
 
 # инициализация и игроковй цикл
 pygame.init()
-size = width, height = 720, 500
+size = width, height = 720, 530
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Морской бой')
 game = Game()
 try:
-    enemy_map = [['.' for _ in range(8)] for _ in range(8)]
+    enemy_map = [['.' for _ in range(9)] for _ in range(9)]
     set_enemy_map()  # инициализация расположения кораблей противника
     for i in enemy_map:
         print(i)
