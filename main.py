@@ -3,6 +3,7 @@ import os
 import sys
 import pygame
 import random
+
 FPS = 30
 # Обозначения клеток
 SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
@@ -30,8 +31,8 @@ class Screens:
     def __init__(self):
         self.fon = pygame.Surface((720, 400))
         self.clock = pygame.time.Clock()
-        self.buttons_pos = []
         self.intro_text = []
+        self.btns = []
 
     def draw(self):
         # выводим фон на окно
@@ -40,7 +41,6 @@ class Screens:
         text_coord = 50
         for line in self.intro_text:
             # выводим текст
-            self.buttons_pos.append(text_coord)
             string_rendered = font.render(line, 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
             text_coord += 10
@@ -54,7 +54,14 @@ class Screens:
                 if event.type == pygame.QUIT:
                     terminate()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    return
+                    for btn in self.btns:
+                        if btn.x <= event.pos[0] <= btn.x + btn.w and \
+                                btn.y <= event.pos[1] <= btn.y + btn.h:
+                            result = btn.run()
+                            if not (result is None):
+                                return
+            for btn in self.btns:
+                screen.blit(btn.text, (btn.x, btn.y))
             pygame.display.flip()
             self.clock.tick(FPS)
 
@@ -65,8 +72,8 @@ class StartScreen(Screens):
         self.fon = pygame.transform.scale(load_image('Battle.jpg'),
                                           (width, height))
         self.intro_text = ["Игра", "",
-                           "Морской бой",
-                           "классический"]
+                           "Морской бой"]
+        self.btns.append(ClassicButton('классический', 10, 150))
 
 
 # на случай ошибок
@@ -79,6 +86,34 @@ class ErrorScreen(Screens):
                            'На данный момент играть невозможно!']
 
 
+# класс для всех кнопок в игре (пока только как надписи)
+class Buttons:
+    def __init__(self, text_btn, x, y):
+        self.font = pygame.font.Font(None, 30)
+        self.text = self.font.render(text_btn, 1, (0, 0, 255))
+        self.x = x
+        self.y = y
+        self.w = self.text.get_width()
+        self.h = self.text.get_height()
+
+    def run(self):
+        pass
+
+
+class StartButton(Buttons):
+    def run(self):
+        for ship in game.player_ships:
+            if ship.condition == CONDITIONS[0]:
+                return
+        game.game = True
+        game.start_battle()
+
+
+class ClassicButton(Buttons):
+    def run(self):
+        return 0
+
+
 # класс самой игры
 class Game:
     def __init__(self):
@@ -89,12 +124,23 @@ class Game:
         self.move = False
         self.rotate = False
         self.pos0 = (0, 0)
+        self.game = False
+        self.pos_mouse = None
+        self.start_btn = [StartButton('Начать игру', 297, 10), False]
+        self.buttons = [self.start_btn]
         self.start_game()
 
+    def start_battle(self):
+        for ship in self.player_ships:
+            ship.condition = CONDITIONS[2]
+        self.start_btn[1] = False
+
     def draw(self):
+        self.start_btn[1] = True
         screen.fill(pygame.Color('white'))
         # выводим начальный экран
         if self.start_screen[1]:
+            self.start_btn[1] = False
             self.start_screen[0].draw()
             self.start_game()
             self.start_screen[1] = False
@@ -103,6 +149,9 @@ class Game:
         self.board_bot.render()
         # выводим спрайты
         self.group.draw(screen)
+        for btn in self.buttons:
+            if btn[1]:
+                screen.blit(btn[0].text, (btn[0].x, btn[0].y))
 
     def draw_error(self):
         # Указываем ошибку
@@ -119,7 +168,6 @@ class Game:
         self.board_bot.set_view(400, 40, 30)
         self.board_player = BoardPlayer(11, 11)
         self.board_player.set_view(20, 40, 30)
-        self.add_ships()
 
     def rotate_ships(self):
         for ship in game.player_ships:
@@ -139,14 +187,15 @@ class Game:
                      ship.condition == 'fixed'):
                 ship.mouse = True
                 self.move = True
+                ship.condition = CONDITIONS[0]
 
     def no_move_ships(self):
         # запрещаем кораблям перемещаться
         for ship in self.player_ships:
-            for ship in self.player_ships:
+            if ship.mouse:
                 ship.mouse = False
                 ship.update('move')
-            self.move = False
+                self.move = False
 
     def fixing_ships(self, pos):
         # считаем изменение координат
@@ -158,7 +207,6 @@ class Game:
         # запоминаем новые координаты
         self.pos0 = event.pos
         self.rotate = False
-
 
     def ai_move(self):
         pass
@@ -214,8 +262,8 @@ class BoardPlayer:
             for y in range(self.height - 1):
                 pygame.draw.rect(screen, pygame.Color('black'),
                                  (x * self.cell_size + self.left,
-                                 y * self.cell_size + self.top,
-                                 self.cell_size, self.cell_size), 1)
+                                  y * self.cell_size + self.top,
+                                  self.cell_size, self.cell_size), 1)
         for x in range(self.width - 2):
             for y in range(self.height - 2):
                 pygame.draw.rect(screen, pygame.Color('blue'),
@@ -230,13 +278,6 @@ class BoardPlayer:
             x = (x - self.left) // self.cell_size - 1
             y = (y - self.top) // self.cell_size - 1
             return x, y
-
-    def on_click(self, cell_coords):
-        pass
-
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        self.on_click(cell)
 
 
 # бота:
@@ -262,8 +303,8 @@ class BoardBot:
             for y in range(self.height - 1):
                 pygame.draw.rect(screen, pygame.Color('black'),
                                  (x * self.cell_size + self.left,
-                                 y * self.cell_size + self.top,
-                                 self.cell_size, self.cell_size), 1)
+                                  y * self.cell_size + self.top,
+                                  self.cell_size, self.cell_size), 1)
         for x in range(self.width - 2):
             for y in range(self.height - 2):
                 pygame.draw.rect(screen, pygame.Color('blue'),
@@ -293,6 +334,7 @@ class Ships(pygame.sprite.Sprite):
         super().__init__(group)
         # добавляем спрайт
         self.add(group)
+        self.group = group
         self.size = list(size)
         self.image = load_image(image)
         self.image = pygame.transform.scale(self.image, size)
@@ -313,7 +355,31 @@ class Ships(pygame.sprite.Sprite):
             self.rect.width, self.rect.height = self.rect.height, self.rect.width
             self.size[0], self.size[1] = self.size[1], self.size[0]
         elif event == 'move':
-            pass
+            if game.pos_mouse:
+                new_x = game.board_player.left + game.board_player.cell_size * \
+                        (game.pos_mouse[0] + 1)
+                new_y = game.board_player.top + game.board_player.cell_size * \
+                        (game.pos_mouse[1] + 1)
+                self.rect.x = new_x - 30
+                self.rect.y = new_y - 30
+                self.rect.width += 60
+                self.rect.height += 60
+                if pygame.sprite.spritecollide(self, self.group, False) == [self]:
+                    self.rect.x += 30
+                    self.rect.y += 30
+                    self.rect.width -= 60
+                    self.rect.height -= 60
+                    if game.board_player.get_cell((self.rect.x + self.rect.width,
+                                                   self.rect.y + self.rect.height)):
+                        self.condition = CONDITIONS[1]
+                        self.x = new_x
+                        self.y = new_y
+                        return 0
+                self.rect.x = self.x
+                self.rect.y = self.y
+                self.rect.width = self.size[0]
+                self.rect.height = self.size[1]
+                self.condition = CONDITIONS[0]
 
     def move(self, pos):
         # переносим спрайт
@@ -327,21 +393,110 @@ class Ships(pygame.sprite.Sprite):
 class Ship1(Ships):
     def __init__(self, image, x, y, group):
         super().__init__(image, x, y, (30, 30), group)
+        self.lives = 1  # жизни, будут учитываться при попадании
+
+    def add_enemy_ships(self, coords):
+        ships = []
+        ships.append([coords, self.lives])
+
+    def is_destroid(self):
+        if self.lives <= 0:
+            self.destroid()
+
+    def destroid(self):
+        pass
 
 
 class Ship2(Ships):
     def __init__(self, image, x, y, group):
         super().__init__(image, x, y, (60, 30), group)
+        self.lives = 2
 
 
 class Ship3(Ships):
     def __init__(self, image, x, y, group):
         super().__init__(image, x, y, (90, 30), group)
+        self.lives = 3
 
 
 class Ship4(Ships):
     def __init__(self, image, x, y, group):
         super().__init__(image, x, y, (120, 30), group)
+        self.lives = 4
+
+
+def set_enemy_map():
+    map = enemy_map
+    col = 0  # количество выставленных кораблей
+    direction = ['down', 'right']
+    # расстановка вражеских кораблей
+    # первые
+    while col != 4:
+        try:
+            x, y = random.randrange(1, 8), random.randrange(1, 8)
+            if map[y][x] == '.':
+                if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.' and
+                        map[y - 1][x - 1] == '.' and map[y + 1][x + 1] == '.' and
+                        map[y + 1][x - 1] == '.' and map[y - 1][x + 1] == '.'):
+                    map[y][x] = '1'
+                    col += 1
+        except IndexError:
+            pass
+
+    # вторые
+    col = 0
+    while col != 3:
+        try:
+            direct = random.choice(direction)
+            x, y = random.randrange(1, 7), random.randrange(1, 7)
+            if map[y][x] == '.':
+                if direct == 'right':
+                    if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.'
+                            and map[y - 1][x + 1] == '.' and map[y + 1][x + 1] == '.' and map[y][x + 2] == '.'
+                            and map[y - 1][x - 1] == '.' and map[y + 1][x - 1] == '.'
+                            and map[y + 1][x + 2] == '.' and map[y - 1][x + 2] == '.'):
+                        map[y][x], map[y][x + 1] = '2', '2'
+                        col += 1
+                elif direct == 'down':
+                    if (map[y - 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.'
+                            and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.' and map[y + 2][x] == '.'
+                            and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
+                            and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.'):
+                        map[y][x], map[y + 1][x] = '2', '2'
+                        col += 1
+        except IndexError:
+            pass
+
+    # третьи
+    col = 0
+    while col != 2:
+        try:
+            direct = random.choice(direction)
+            x, y = random.randrange(1, 6), random.randrange(1, 6)
+            if map[y][x] == '.':
+                if direct == 'right':
+                    if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.'
+                            and map[y - 1][x + 1] == '.' and map[y + 1][x + 1] == '.'
+                            and map[y - 1][x + 2] == '.' and map[y + 1][x + 1] == '.' and map[y][x + 3] == '.'
+
+                            and map[y - 1][x - 1] == '.' and map[y + 1][x - 1] == '.'
+                            and map[y + 1][x + 3] == '.' and map[y - 1][x + 3] == '.'):
+                        map[y][x], map[y][x + 1], map[y][x + 2] = '3', '3', '3'
+                        col += 1
+
+                elif direct == 'down':
+                    if (map[y + 1][x] == '.' and map[y][x + 1] == '.' and map[y][x - 1] == '.'
+                            and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.'
+                            and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.' and map[y + 3][x] == '.'
+
+                            and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
+                            and map[y + 3][x - 1] == '.' and map[y + 3][x + 1] == '.'):
+                        map[y][x], map[y + 1][x], map[y + 2][x] = '3', '3', '3'
+                        col += 1
+        except IndexError:
+            pass
+
+    # четвёртый
 
 
 # инициализация и игроковй цикл
@@ -351,6 +506,11 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Морской бой')
 game = Game()
 try:
+    enemy_map = [['.' for _ in range(8)] for _ in range(8)]
+    set_enemy_map()  # инициализация расположения кораблей противника
+    for i in enemy_map:
+        print(i)
+
     clock = pygame.time.Clock()
     # таймер использовать будем при ходе ИИ
     TIMER = pygame.USEREVENT + 1
@@ -359,8 +519,8 @@ try:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            if event.type == pygame.KEYDOWN and\
-                event.key == pygame.K_ESCAPE and not(game.start_screen[1]):
+            if event.type == pygame.KEYDOWN and \
+                    event.key == pygame.K_ESCAPE and not (game.start_screen[1]):
                 # Вновь рисуем стартовое окно в случае, если нажат Esc
                 game.start_screen[1] = True
             # поворачиваем
@@ -368,8 +528,16 @@ try:
                 game.rotate_ships()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 game.start_of_the_transport_ships()
-                game.board_bot.get_click(event.pos)
-            if event.type == pygame.MOUSEBUTTONUP and not(game.rotate):
+                if game.game:
+                    game.board_bot.get_click(event.pos)
+                else:
+                    if game.start_btn[0].x <= event.pos[0] <= \
+                            game.start_btn[0].x + game.start_btn[0].w and \
+                            game.start_btn[0].y <= event.pos[1] <= \
+                            game.start_btn[0].y + game.start_btn[0].h:
+                        game.start_btn[0].run()
+            if event.type == pygame.MOUSEBUTTONUP and not (game.rotate):
+                game.pos_mouse = game.board_player.get_cell(event.pos)
                 game.no_move_ships()
             if event.type == pygame.MOUSEMOTION and game.move:
                 game.fixing_ships(event.pos)
