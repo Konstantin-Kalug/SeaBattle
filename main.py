@@ -430,68 +430,76 @@ def set_enemy_map():
     col = 0  # количество выставленных кораблей
     direction = ['down', 'right']
     # расстановка вражеских кораблей
-    # первые
-    while col != 4:
-        try:
-            x, y = random.randrange(0, 9), random.randrange(0, 9)
-            if map[y][x] == '.':
-                if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.' and
-                        map[y - 1][x - 1] == '.' and map[y + 1][x + 1] == '.' and
-                        map[y + 1][x - 1] == '.' and map[y - 1][x + 1] == '.'):
-                    map[y][x] = '1'
-                    col += 1
-        except IndexError:
-            pass
-    # вторые
-    col = 0
-    while col != 3:
-        try:
-            direct = random.choice(direction)
-            x, y = random.randrange(0, 8), random.randrange(0, 8)
-            if map[y][x] == '.':
-                if direct == 'right':
-                    if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.'
-                            and map[y - 1][x + 1] == '.' and map[y + 1][x + 1] == '.' and map[y][x + 2] == '.'
-                            and map[y - 1][x - 1] == '.' and map[y + 1][x - 1] == '.'
-                            and map[y + 1][x + 2] == '.' and map[y - 1][x + 2] == '.'):
-                        map[y][x], map[y][x + 1] = '2', '2'
+    while True:
+        # первые
+        while col != 4:
+            try:
+                x, y = random.randrange(0, 9), random.randrange(0, 9)
+                if map[y][x] == '.':
+                    if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.' and
+                            map[y - 1][x - 1] == '.' and map[y + 1][x + 1] == '.' and
+                            map[y + 1][x - 1] == '.' and map[y - 1][x + 1] == '.'):
+                        map[y][x] = '1'
                         col += 1
-                elif direct == 'down':
-                    if (map[y - 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.'
-                            and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.' and map[y + 2][x] == '.'
-                            and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
-                            and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.'):
-                        map[y][x], map[y + 1][x] = '2', '2'
-                        col += 1
-        except IndexError:
-            pass
-        except ValueError:
-            return_command = True
-    # третьи
-    col = 0
-    while col != 2:
-        try:
-            direct = random.choice(direction)
-            x, y = random.randrange(0, 7), random.randrange(0, 7)
-            if map[y][x] == '.':
-                if direct == 'right':
-                    if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.'                                and map[y - 1][x + 1] == '.' and map[y + 1][x + 1] == '.'
-                            and map[y - 1][x + 2] == '.' and map[y + 1][x + 1] == '.' and map[y][x + 3] == '.'
-                            and map[y - 1][x - 1] == '.' and map[y + 1][x - 1] == '.'
-                            and map[y + 1][x + 3] == '.' and map[y - 1][x + 3] == '.'):
-                        map[y][x], map[y][x + 1], map[y][x + 2] = '3', '3', '3'
-                        col += 1
-                elif direct == 'down':
-                    if (map[y + 1][x] == '.' and map[y][x + 1] == '.' and map[y][x - 1] == '.'
-                            and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.'
-                            and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.' and map[y + 3][x] == '.'
-                            and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
-                            and map[y + 3][x - 1] == '.' and map[y + 3][x + 1] == '.'):
-                        map[y][x], map[y + 1][x], map[y + 2][x] = '3', '3', '3'
-                        col += 1
-        except IndexError:
-            pass
-    # четвёртый
+            except IndexError:
+                pass
+        # вторые
+        col = 0
+        while col != 3:
+            try:
+                direct = random.choice(direction)
+                x, y = random.randrange(0, 8), random.randrange(0, 8)
+                if map[y][x] == '.':
+                    if direct == 'right':
+                        if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.'
+                                and map[y - 1][x + 1] == '.' and map[y + 1][x + 1] == '.' and map[y][x + 2] == '.'
+                                and map[y - 1][x - 1] == '.' and map[y + 1][x - 1] == '.'
+                                and map[y + 1][x + 2] == '.' and map[y - 1][x + 2] == '.'):
+                            map[y][x], map[y][x + 1] = '2', '2'
+                            col += 1
+                    elif direct == 'down':
+                        if (map[y - 1][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.'
+                                and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.' and map[y + 2][x] == '.'
+                                and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
+                                and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.'):
+                            map[y][x], map[y + 1][x] = '2', '2'
+                            col += 1
+            except IndexError:
+                pass
+            except ValueError:
+                return_command = True
+        # третьи
+        col = 0
+        while col != 2:
+            try:
+                direct = random.choice(direction)
+                x, y = random.randrange(0, 7), random.randrange(0, 7)
+                if map[y][x] == '.':
+                    if direct == 'right':
+                        if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][x - 1] == '.'                                and map[y - 1][x + 1] == '.' and map[y + 1][x + 1] == '.'
+                                and map[y - 1][x + 2] == '.' and map[y + 1][x + 1] == '.' and map[y][x + 3] == '.'
+                                and map[y - 1][x - 1] == '.' and map[y + 1][x - 1] == '.'
+                                and map[y + 1][x + 3] == '.' and map[y - 1][x + 3] == '.'):
+                            map[y][x], map[y][x + 1], map[y][x + 2] = '3', '3', '3'
+                            col += 1
+                    elif direct == 'down':
+                        if (map[y + 1][x] == '.' and map[y][x + 1] == '.' and map[y][x - 1] == '.'
+                                and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.'
+                                and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.' and map[y + 3][x] == '.'
+                                and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
+                                and map[y + 3][x - 1] == '.' and map[y + 3][x + 1] == '.'):
+                            map[y][x], map[y + 1][x], map[y + 2][x] = '3', '3', '3'
+                            col += 1
+            except IndexError:
+                pass
+        # четвёртый
+        for x in range(9):
+            for y in range(9):
+                pass
+                # здесь надо такую же проверку,
+                # как и везде, если под конец место так и не найдется,
+                # надо начинать полный цикл заново, удалив все корабли
+                # direct и тот, и тот проверять нужно
 
 
 # инициализация и игроковй цикл
