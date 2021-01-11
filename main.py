@@ -138,6 +138,8 @@ class Game:
             ship.condition = CONDITIONS[2]
         self.start_btn[1] = False
         self.enemy_map = self.set_enemy_map()
+        for i in self.enemy_map:
+            print(i)
 
     def draw(self):
         self.start_btn[1] = True
@@ -251,14 +253,12 @@ class Game:
             while col != 4:
                 try:
                     x, y = random.randrange(0, 9), random.randrange(0, 9)
-                    if map[y][x] == '.':
-                        if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][
-                            x - 1] == '.' and
-                                map[y][x + 1] == '.' and
-                                map[y - 1][x - 1] == '.' and map[y + 1][x + 1] == '.' and
-                                map[y + 1][x - 1] == '.' and map[y - 1][x + 1] == '.'):
-                            map[y][x] = '1'
-                            col += 1
+                    if (map[y][x] == '.' and map[y - 1][x - 1] == '.' and map[y - 1][x] == '.' and
+                            map[y - 1][x + 1] == '.' and map[y][x + 1] == '.' and
+                            map[y + 1][x + 1] == '.' and map[y + 1][x] == '.' and
+                            map[y + 1][x - 1] == '.' and map[y][x - 1] == '.'):
+                        map[y][x] = '1'
+                        col += 1
                 except IndexError:
                     pass
             # вторые
@@ -283,14 +283,16 @@ class Game:
                                     and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.' and
                                     map[y + 2][x] == '.'
                                     and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
-                                    and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.'):
+                                    and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.' and
+                                    map[y + 1][x] == '.'):
                                 map[y][x], map[y + 1][x] = '2', '2'
                                 col += 1
                 except IndexError:
                     pass
             # третьи
             col = 0
-            while col != 2:
+            i = 0
+            while col != 2 and i <= 50:
                 try:
                     direct = random.choice(direction)
                     x, y = random.randrange(0, 7), random.randrange(0, 7)
@@ -299,53 +301,58 @@ class Game:
                             if (map[y - 1][x] == '.' and map[y + 1][x] == '.' and map[y][
                                 x - 1] == '.' and map[y - 1][x + 1] == '.' and map[y + 1][
                                 x + 1] == '.'
-                                    and map[y - 1][x + 2] == '.' and map[y + 1][x + 1] == '.' and
+                                    and map[y - 1][x + 2] == '.' and map[y + 1][x + 2] == '.' and
                                     map[y][x + 3] == '.'
                                     and map[y - 1][x - 1] == '.' and map[y + 1][x - 1] == '.'
-                                    and map[y + 1][x + 3] == '.' and map[y - 1][x + 3] == '.'):
+                                    and map[y + 1][x + 3] == '.' and map[y - 1][x + 3] == '.'
+                                    and map[y][x + 1] == '.' and map[y][x + 2] == '.'):
                                 map[y][x], map[y][x + 1], map[y][x + 2] = '3', '3', '3'
                                 col += 1
                         elif direct == 'down':
-                            if (map[y + 1][x] == '.' and map[y][x + 1] == '.' and map[y][
-                                x - 1] == '.'
+                            if (map[y + 1][x] == '.' and map[y][x + 1] == '.' and
+                                    map[y][x - 1] == '.'
                                     and map[y + 1][x + 1] == '.' and map[y + 1][x - 1] == '.'
                                     and map[y + 2][x - 1] == '.' and map[y + 2][x + 1] == '.' and
                                     map[y + 3][x] == '.'
                                     and map[y - 1][x - 1] == '.' and map[y - 1][x + 1] == '.'
-                                    and map[y + 3][x - 1] == '.' and map[y + 3][x + 1] == '.'):
+                                    and map[y + 3][x - 1] == '.' and map[y + 3][x + 1] == '.'
+                                    and map[y - 1][x] == '.' and map[y + 2][x] == '.'):
                                 map[y][x], map[y + 1][x], map[y + 2][x] = '3', '3', '3'
                                 col += 1
                 except IndexError:
                     pass
+                i += 1
+            if i >= 50:
+                continue
             col = 0
             # четвёртый
             for x in range(9):
                 for y in range(9):
                     try:
-                        if (map[x][y] == '.' and map[x][y - 1] == '.' and map[x][y + 1] == '.' and
-                                map[x][y + 2] == '.' and map[x][y + 3] == '.' and
-                                map[x][y + 4] == '.' and
-                                map[x - 1][y] == '.' and map[x - 1][y - 1] == '.' and
-                                map[x - 1][y + 1] == '.' and
-                                map[x - 1][y + 2] == '.' and map[x - 1][y + 3] == '.' and
-                                map[x - 1][y + 4] == '.' and map[x + 1][y] == '.' and
-                                map[x + 1][y - 1] == '.' and map[x + 1][y + 1] == '.' and
-                                map[x + 1][y + 2] == '.' and map[x + 1][y + 3] == '.' and
-                                map[x + 1][y + 4] == '.'):
-                            map[x][y], map[x][y + 1], map[x][y + 2], map[x][
-                                y + 3] = '4', '4', '4', '4'
+                        if (map[y][x] == '.' and map[y][x - 1] == '.' and map[y][x + 1] == '.' and
+                                map[y][x + 2] == '.' and map[y][x + 3] == '.' and
+                                map[y][x + 4] == '.' and
+                                map[y - 1][x] == '.' and map[y - 1][x - 1] == '.' and
+                                map[y - 1][x + 1] == '.' and
+                                map[y - 1][x + 2] == '.' and map[y - 1][x + 3] == '.' and
+                                map[y - 1][x + 4] == '.' and map[y + 1][x] == '.' and
+                                map[y + 1][x - 1] == '.' and map[y + 1][x + 1] == '.' and
+                                map[y + 1][x + 2] == '.' and map[y + 1][x + 3] == '.' and
+                                map[y + 1][x + 4] == '.'):
+                            map[y][x], map[y][x + 1], map[y][x + 2],\
+                            map[y][x + 3] = '4', '4', '4', '4'
                             return map
-                        elif (map[x][y] == '.' and map[x - 1][y] == '.' and map[x + 1][y] == '.' and
-                              map[x + 2][y] == '.' and map[x + 3][y] == '.' and
-                              map[x + 4][y] == '.' and
-                              map[x][y - 1] == '.' and map[x - 1][y - 1] == '.' and
-                              map[x + 1][y - 1] == '.' and map[x + 2][y - 1] == '.' and
-                              map[x + 3][y - 1] == '.' and map[x + 4][y - 1] == '.' and
-                              map[x][y + 1] == '.' and map[x - 1][y + 1] == '.' and
-                              map[x + 1][y + 1] == '.' and map[x + 2][y + 1] == '.' and
-                              map[x + 3][y + 1] == '.' and map[x + 4][y + 1] == '.'):
-                            map[x][y], map[x + 1][y], map[x + 2][y], map[x + 3][
-                                y] = '4', '4', '4', '4'
+                        elif (map[y][x] == '.' and map[y - 1][x] == '.' and map[y + 1][x] == '.' and
+                              map[y + 2][x] == '.' and map[y + 3][x] == '.' and
+                              map[y + 4][x] == '.' and
+                              map[y][x - 1] == '.' and map[y - 1][x - 1] == '.' and
+                              map[y + 1][x - 1] == '.' and map[y + 2][x - 1] == '.' and
+                              map[y + 3][x - 1] == '.' and map[y + 4][x - 1] == '.' and
+                              map[y][x + 1] == '.' and map[y - 1][x + 1] == '.' and
+                              map[y + 1][x + 1] == '.' and map[y + 2][x + 1] == '.' and
+                              map[y + 3][x + 1] == '.' and map[y + 4][x + 1] == '.'):
+                            map[y][x], map[y + 1][x], map[y + 2][x],\
+                            map[y + 3][x] = '4', '4', '4', '4'
                             return map
                     except IndexError:
                         pass
