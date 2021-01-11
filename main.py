@@ -114,6 +114,35 @@ class ClassicButton(Buttons):
         return 0
 
 
+class Game_Bot:  # весь класс пока примерно накидал
+    def __init__(self, player_map):
+        self.status = None  # статус предыдущего хода на момент текущего
+        self.was_damaged = []  # для записи данных предыдущего хода при попадании
+        self.player_map = player_map  # нужно составить карту игрока по началу игры
+
+    def shot(self):
+        global y, x
+        direction = ['left', 'right', 'up', 'down']  # для выбора направления стрельбы при попадании
+        hit = True
+        while hit:  # поиск незадействованной клетки
+            x, y = random.randrange(0, 9), random.randrange(0, 9)
+            if self.player_map[y][x] != 'x':  # крестиком будет отмечать как-либо использованные клетки
+                hit = False
+
+        if self.player_map[y][x] == '.':  # сам ход бота
+            self.player_map[y][x] = 'x'
+            self.status = None
+        elif (self.player_map[y][x] == '2' or  # в разные корабли будет по разному
+                self.player_map[y][x] == '3' or
+                self.player_map[y][x] == '4'):
+            direct = random.choice(direction)
+        elif self.player_map[y][x] == '1':
+            pass
+
+    def update(self):
+        pass
+
+
 # класс самой игры
 class Game:
     def __init__(self):
