@@ -167,8 +167,7 @@ class Game:
             ship.condition = CONDITIONS[2]
         self.start_btn[1] = False
         self.enemy_map = self.set_enemy_map()
-        for i in self.enemy_map:
-            print(i)
+        self.board_bot.board = self.enemy_map
 
     def draw(self):
         self.start_btn[1] = True
@@ -243,8 +242,8 @@ class Game:
         self.pos0 = event.pos
         self.rotate = False
 
-    def ai_move(self):
-        pass
+    def move_player(self, pos_mouse):
+        self.board_bot.get_click(event.pos)
 
     def add_ships(self):
         x = 10
@@ -460,6 +459,23 @@ class BoardBot:
                                  (x * self.cell_size + self.left + self.cell_size,
                                   y * self.cell_size + self.top + self.cell_size,
                                   self.cell_size, self.cell_size), 1)
+                if self.board[y][x] == '*':
+                    pygame.draw.ellipse(screen,
+                                        (0, 0, 0),
+                                        (self.left + self.cell_size * (x + 1) + 3,
+                                         self.top + self.cell_size * (y + 1) + 3,
+                                         self.cell_size - 6,
+                                         self.cell_size - 6), 0)
+                if self.board[y][x] == 'x':
+                    pygame.draw.rect(screen, pygame.Color('black'),
+                                     (x * self.cell_size + self.left + self.cell_size + 5,
+                                      y * self.cell_size + self.top + self.cell_size + 5,
+                                      self.cell_size - 10, self.cell_size - 10), 1)
+                if self.board[y][x] == '#':
+                    pygame.draw.rect(screen, pygame.Color('black'),
+                                     (x * self.cell_size + self.left + self.cell_size,
+                                      y * self.cell_size + self.top + self.cell_size,
+                                      self.cell_size, self.cell_size), 0)
 
     def get_cell(self, mouse_pos):
         x, y = mouse_pos
@@ -467,19 +483,50 @@ class BoardBot:
                 self.top + self.cell_size < y < self.top + (self.height - 1) * self.cell_size):
             x = (x - self.left) // self.cell_size - 1
             y = (y - self.top) // self.cell_size - 1
-            print(x, y)
+            return x, y
 
     def on_click(self, cell_coords):
-        pass
+        if self.board[cell_coords[1]][cell_coords[0]] == '.':
+            self.board[cell_coords[1]][cell_coords[0]] = '*'
+        if self.board[cell_coords[1]][cell_coords[0]] == '1' or\
+                self.board[cell_coords[1]][cell_coords[0]] in '234' and\
+                self.board[cell_coords[1]][cell_coords[0] + 1] not in '234' and\
+                self.board[cell_coords[1]][cell_coords[0] - 1] not in '234' and\
+                self.board[cell_coords[1] + 1][cell_coords[0]] not in '234' and\
+                self.board[cell_coords[1] - 1][cell_coords[0]] not in '234':
+            self.board[cell_coords[1]][cell_coords[0]] = '#'
+            for x in range(1, 4):
+                end = 0
+                if cell_coords[0] + x < len(self.board[0]):
+                    if self.board[cell_coords[1]][cell_coords[0] + x] == 'x':
+                        self.board[cell_coords[1]][cell_coords[0] + x] = '#'
+                        end = 1
+                if cell_coords[0] - x >= 0:
+                    if self.board[cell_coords[1]][cell_coords[0] - x] == 'x':
+                        self.board[cell_coords[1]][cell_coords[0] - x] = '#'
+                        end = 1
+                if cell_coords[1] + x < len(self.board):
+                    if self.board[cell_coords[1] + x][cell_coords[0]] == 'x':
+                        self.board[cell_coords[1] + x][cell_coords[0]] = '#'
+                        end = 1
+                if cell_coords[1] - x >= 0:
+                    if self.board[cell_coords[1] - x][cell_coords[0]] == 'x':
+                        self.board[cell_coords[1] - x][cell_coords[0]] = '#'
+                        end = 1
+                if end == 0:
+                    break
+        if self.board[cell_coords[1]][cell_coords[0]] in '234':
+            self.board[cell_coords[1]][cell_coords[0]] = 'x'
 
     def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
-        self.on_click(cell)
+        if not(cell is None):
+            self.on_click(cell)
 
 
 # основной класс для всех кораблей
 class Ships(pygame.sprite.Sprite):
-    def __init__(self, image, x_pos, y_pos, size, group):
+    def __init__(self, image, x_pos, y_pos, size, group, direct='right'):
         super().__init__(group)
         # добавляем спрайт
         self.add(group)
@@ -495,6 +542,7 @@ class Ships(pygame.sprite.Sprite):
         self.rect.y = y_pos
         self.x = x_pos
         self.y = y_pos
+        self.direct = direct
         # перенос корабля
         self.mouse = False
 
@@ -503,6 +551,10 @@ class Ships(pygame.sprite.Sprite):
             # поворачиваем прямоугольник спрайта
             self.rect.width, self.rect.height = self.rect.height, self.rect.width
             self.size[0], self.size[1] = self.size[1], self.size[0]
+            if self.direct == 'right':
+                self.direct = 'down'
+            else:
+                self.direct = 'right'
         elif event == 'move':
             if game.pos_mouse:
                 new_x = game.board_player.left + game.board_player.cell_size * \
@@ -543,10 +595,6 @@ class Ship1(Ships):
     def __init__(self, image, x, y, group):
         super().__init__(image, x, y, (30, 30), group)
         self.lives = 1  # жизни, будут учитываться при попадании
-
-    def add_enemy_ships(self, coords):
-        ships = []
-        ships.append([coords, self.lives])
 
     def is_destroid(self):
         if self.lives <= 0:
@@ -599,7 +647,7 @@ try:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 game.start_of_the_transport_ships()
                 if game.game:
-                    game.board_bot.get_click(event.pos)
+                    game.move_player(event.pos)
                 else:
                     if game.start_btn[0].x <= event.pos[0] <= \
                             game.start_btn[0].x + game.start_btn[0].w and \
