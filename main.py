@@ -126,9 +126,9 @@ class Game_Bot:  # весь класс пока примерно накидал
         hit = True
         while hit:  # поиск незадействованной клетки
             x, y = random.randrange(0, 9), random.randrange(0, 9)
-            if self.player_map[y][x] != 'x':  # крестиком будет отмечать как-либо использованные клетки
+            if self.player_map[y][x] != 'x':
+                # крестиком будет отмечать как-либо использованные клетки
                 hit = False
-
         if self.player_map[y][x] == '.':  # сам ход бота
             self.player_map[y][x] = 'x'
             self.status = None
@@ -160,14 +160,18 @@ class Game:
         self.start_btn = [StartButton('Начать игру', 297, 10), False]
         self.buttons = [self.start_btn]
         self.enemy_map = []
+        self.move_ai_player = None
         self.start_game()
 
     def start_battle(self):
         for ship in self.player_ships:
             ship.condition = CONDITIONS[2]
+            self.board_player.set_board((ship.x, ship.y), ship)
         self.start_btn[1] = False
         self.enemy_map = self.set_enemy_map()
         self.board_bot.board = self.enemy_map
+        for i in self.board_player.board:
+            print(i)
 
     def draw(self):
         self.start_btn[1] = True
@@ -243,7 +247,13 @@ class Game:
         self.rotate = False
 
     def move_player(self, pos_mouse):
+        if self.move_ai_player == 'ai':
+            self.ai_move()
         self.board_bot.get_click(event.pos)
+
+    def ai_move(self):
+        for x in self.board_player.board:
+            pass
 
     def add_ships(self):
         x = 10
@@ -393,7 +403,7 @@ class BoardPlayer:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.board = [[0] * width for _ in range(height)]
+        self.board = [['.'] * 9 for _ in range(9)]
         # значения по умолчанию
         self.left = 10
         self.top = 10
@@ -419,13 +429,36 @@ class BoardPlayer:
                                   y * self.cell_size + self.top + self.cell_size,
                                   self.cell_size, self.cell_size), 1)
 
-    def get_cell(self, mouse_pos):
-        x, y = mouse_pos
-        if (self.left + self.cell_size < x < self.left + self.width * self.cell_size and
-                self.top + self.cell_size < y < self.top + self.height * self.cell_size):
-            x = (x - self.left) // self.cell_size - 1
-            y = (y - self.top) // self.cell_size - 1
-            return x, y
+    def get_cell(self, pos):
+        x, y = pos
+        x = (x + 5 - self.left) // self.cell_size - 1
+        y = (y + 5 - self.top) // self.cell_size - 1
+        return x, y
+
+    def set_board(self, pos, ship):
+        cell = self.get_cell(pos)
+        if ship.__class__.__name__ == 'Ship1':
+            self.board[cell[1]][cell[0]] = '1'
+        elif ship.__class__.__name__ == 'Ship2':
+            self.board[cell[1]][cell[0]] = '2'
+            if ship.direct == 'down':
+                self.board[cell[1] + 1][cell[0]] = '2'
+            elif ship.direct == 'right':
+                self.board[cell[1]][cell[0] + 1] = '2'
+        elif ship.__class__.__name__ == 'Ship3':
+            self.board[cell[1]][cell[0]] = '3'
+            if ship.direct == 'down':
+                self.board[cell[1] + 1][cell[0]], self.board[cell[1] + 2][cell[0]] = '3', '3'
+            elif ship.direct == 'right':
+                self.board[cell[1]][cell[0] + 1], self.board[cell[1]][cell[0] + 2] = '3', '3'
+        elif ship.__class__.__name__ == 'Ship4':
+            self.board[cell[1]][cell[0]] = '4'
+            if ship.direct == 'down':
+                self.board[cell[1] + 1][cell[0]], self.board[cell[1] + 2][cell[0]],\
+                self.board[cell[1] + 3][cell[0]] = '4', '4', '4'
+            elif ship.direct == 'right':
+                self.board[cell[1]][cell[0] + 1], self.board[cell[1]][cell[0] + 2],\
+                    self.board[cell[1]][cell[0] + 3] = '4', '4', '4'
 
 
 # бота:
