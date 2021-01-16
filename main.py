@@ -133,8 +133,8 @@ class Game_Bot:  # весь класс пока примерно накидал
             self.player_map[y][x] = 'x'
             self.status = None
         elif (self.player_map[y][x] == '2' or  # в разные корабли будет по разному
-                self.player_map[y][x] == '3' or
-                self.player_map[y][x] == '4'):
+              self.player_map[y][x] == '3' or
+              self.player_map[y][x] == '4'):
             direct = random.choice(direction)
         elif self.player_map[y][x] == '1':
             pass
@@ -160,7 +160,6 @@ class Game:
         self.start_btn = [StartButton('Начать игру', 297, 10), False]
         self.buttons = [self.start_btn]
         self.enemy_map = []
-        self.move_ai_player = None
         self.start_game()
 
     def start_battle(self):
@@ -170,8 +169,8 @@ class Game:
         self.start_btn[1] = False
         self.enemy_map = self.set_enemy_map()
         self.board_bot.board = self.enemy_map
-        for i in self.board_player.board:
-            print(i)
+        if random.choice(['ai', 'player']) == 'ai':
+            self.ai_move()
 
     def draw(self):
         self.start_btn[1] = True
@@ -247,13 +246,32 @@ class Game:
         self.rotate = False
 
     def move_player(self, pos_mouse):
-        if self.move_ai_player == 'ai':
-            self.ai_move()
         self.board_bot.get_click(event.pos)
 
     def ai_move(self):
-        for x in self.board_player.board:
-            pass
+        for y in range(len(self.board_player.board)):
+            for x in range(len(self.board_player.board[y])):
+                if self.board_player.board[y][x] == 'x':
+                    if self.board_player.board[y + 1][x] == '.':
+                        self.board_player.board[y + 1][x] = 'x'
+                        self.board_player.check(x, y)
+                        return
+                    elif self.board_player.board[y - 1][x] == '.':
+                        self.board_player.board[y - 1][x] = 'x'
+                        self.board_player.check(x, y)
+                        return
+                    elif self.board_player.board[y][x + 1] == '.':
+                        self.board_player.board[y][x + 1] = 'x'
+                        self.board_player.check(x, y)
+                        return
+                    elif self.board_player.board[y][x - 1] == '.':
+                        self.board_player.board[y][x - 1] = 'x'
+                        self.board_player.check(x, y)
+                        return
+        x, y = random.randrange(9), random.randrange(9)
+        while self.board_player.board[y][x] != '.':
+            x, y = random.randrange(9), random.randrange(9)
+        self.board_player.board[y][x] = 'x'
 
     def add_ships(self):
         x = 10
@@ -377,7 +395,7 @@ class Game:
                                 map[y + 1][x - 1] == '.' and map[y + 1][x + 1] == '.' and
                                 map[y + 1][x + 2] == '.' and map[y + 1][x + 3] == '.' and
                                 map[y + 1][x + 4] == '.'):
-                            map[y][x], map[y][x + 1], map[y][x + 2],\
+                            map[y][x], map[y][x + 1], map[y][x + 2], \
                             map[y][x + 3] = '4', '4', '4', '4'
                             return map
                         elif (map[y][x] == '.' and map[y - 1][x] == '.' and map[y + 1][x] == '.' and
@@ -389,7 +407,7 @@ class Game:
                               map[y][x + 1] == '.' and map[y - 1][x + 1] == '.' and
                               map[y + 1][x + 1] == '.' and map[y + 2][x + 1] == '.' and
                               map[y + 3][x + 1] == '.' and map[y + 4][x + 1] == '.'):
-                            map[y][x], map[y + 1][x], map[y + 2][x],\
+                            map[y][x], map[y + 1][x], map[y + 2][x], \
                             map[y + 3][x] = '4', '4', '4', '4'
                             return map
                     except IndexError:
@@ -431,12 +449,20 @@ class BoardPlayer:
 
     def get_cell(self, pos):
         x, y = pos
-        x = (x + 5 - self.left) // self.cell_size - 1
-        y = (y + 5 - self.top) // self.cell_size - 1
+        if (self.left + self.cell_size < x < self.left + (self.width) * self.cell_size and
+                self.top + self.cell_size < y < self.top + (self.height) * self.cell_size):
+            x = (x - self.left) // self.cell_size - 1
+            y = (y - self.top) // self.cell_size - 1
+            return x, y
+
+    def get_cell_set(self, pos):
+        x, y = pos
+        x = (x - self.left) // self.cell_size - 1
+        y = (y - self.top) // self.cell_size - 1
         return x, y
 
     def set_board(self, pos, ship):
-        cell = self.get_cell(pos)
+        cell = self.get_cell_set(pos)
         if ship.__class__.__name__ == 'Ship1':
             self.board[cell[1]][cell[0]] = '1'
         elif ship.__class__.__name__ == 'Ship2':
@@ -454,11 +480,40 @@ class BoardPlayer:
         elif ship.__class__.__name__ == 'Ship4':
             self.board[cell[1]][cell[0]] = '4'
             if ship.direct == 'down':
-                self.board[cell[1] + 1][cell[0]], self.board[cell[1] + 2][cell[0]],\
+                self.board[cell[1] + 1][cell[0]], self.board[cell[1] + 2][cell[0]], \
                 self.board[cell[1] + 3][cell[0]] = '4', '4', '4'
             elif ship.direct == 'right':
-                self.board[cell[1]][cell[0] + 1], self.board[cell[1]][cell[0] + 2],\
-                    self.board[cell[1]][cell[0] + 3] = '4', '4', '4'
+                self.board[cell[1]][cell[0] + 1], self.board[cell[1]][cell[0] + 2], \
+                self.board[cell[1]][cell[0] + 3] = '4', '4', '4'
+
+    def check(self, x, y):
+        if self.board[y][x] == '1' or \
+                self.board[y][x] in '234' and \
+                self.board[y][x + 1] not in '234' and \
+                self.board[y][x - 1] not in '234' and \
+                self.board[y + 1][x] not in '234' and \
+                self.board[y - 1][x] not in '234':
+            self.board[y][x] = '#'
+            for i in range(1, 4):
+                end = 0
+                if y + i < len(self.board[0]):
+                    if self.board[y][x + i] == 'x':
+                        self.board[y][x + i] = '#'
+                        end = 1
+                if y - i >= 0:
+                    if self.board[y][x - i] == 'x':
+                        self.board[y][x - i] = '#'
+                        end = 1
+                if y + i < len(self.board):
+                    if self.board[y + i][x] == 'x':
+                        self.board[y + i][x] = '#'
+                        end = 1
+                if y - i >= 0:
+                    if self.board[y - i][x] == 'x':
+                        self.board[y - i][x] = '#'
+                        end = 1
+                if end == 0:
+                    break
 
 
 # бота:
@@ -521,11 +576,11 @@ class BoardBot:
     def on_click(self, cell_coords):
         if self.board[cell_coords[1]][cell_coords[0]] == '.':
             self.board[cell_coords[1]][cell_coords[0]] = '*'
-        if self.board[cell_coords[1]][cell_coords[0]] == '1' or\
-                self.board[cell_coords[1]][cell_coords[0]] in '234' and\
-                self.board[cell_coords[1]][cell_coords[0] + 1] not in '234' and\
-                self.board[cell_coords[1]][cell_coords[0] - 1] not in '234' and\
-                self.board[cell_coords[1] + 1][cell_coords[0]] not in '234' and\
+        if self.board[cell_coords[1]][cell_coords[0]] == '1' or \
+                self.board[cell_coords[1]][cell_coords[0]] in '234' and \
+                self.board[cell_coords[1]][cell_coords[0] + 1] not in '234' and \
+                self.board[cell_coords[1]][cell_coords[0] - 1] not in '234' and \
+                self.board[cell_coords[1] + 1][cell_coords[0]] not in '234' and \
                 self.board[cell_coords[1] - 1][cell_coords[0]] not in '234':
             self.board[cell_coords[1]][cell_coords[0]] = '#'
             for x in range(1, 4):
@@ -553,7 +608,7 @@ class BoardBot:
 
     def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
-        if not(cell is None):
+        if not (cell is None):
             self.on_click(cell)
 
 
