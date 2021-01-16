@@ -59,6 +59,8 @@ class Screens:
                                 btn.y <= event.pos[1] <= btn.y + btn.h:
                             result = btn.run()
                             if not (result is None):
+                                if 'Вы' in self.intro_text[-1]:
+                                    del self.intro_text[-1]
                                 return
             for btn in self.btns:
                 screen.blit(btn.text, (btn.x, btn.y))
@@ -73,7 +75,7 @@ class StartScreen(Screens):
                                           (width, height))
         self.intro_text = ["Игра", "",
                            "Морской бой"]
-        self.btns.append(ClassicButton('классический', 10, 150))
+        self.btns.append(ClassicButton('классический', 10, 180))
 
 
 # на случай ошибок
@@ -169,6 +171,7 @@ class Game:
         self.start_btn[1] = False
         self.enemy_map = self.set_enemy_map()
         self.board_bot.board = self.enemy_map
+        self.win = None
         if random.choice(['ai', 'player']) == 'ai':
             self.ai_move()
 
@@ -244,12 +247,47 @@ class Game:
         self.pos0 = event.pos
         self.rotate = False
 
+    def is_win(self):
+        ships = 0
+        points = 0
+        for i in self.board_player.board:
+            if '1' not in i and '2' not in i and '3' not in i and '4' not in i:
+                ships += 1
+            if i == ['.'] * 9:
+                points += 1
+        if ships == 9 and points != 9:
+            self.win = 'Вы проиграли'
+        ships = 0
+        points = 0
+        for i in self.board_bot.board:
+            if '1' not in i and '2' not in i and '3' not in i and '4' not in i:
+                ships += 1
+            if i == ['.'] * 9:
+                points += 1
+        if ships == 9 and points != 9:
+            self.win = 'Вы выиграли'
+
     def move_player(self, pos_mouse):
         move = self.board_bot.get_click(event.pos)
-        if move == '*':
-            move = self.ai_move()
-            while move != '*':
+        self.is_win()
+        if self.win:
+            self.start_screen[1] = True
+            self.start_screen[0].intro_text.append(self.win)
+            self.game = False
+            self.win = None
+            return
+        else:
+            if move == '*':
                 move = self.ai_move()
+                while move != '*' and not(self.win):
+                    move = self.ai_move()
+                    self.is_win()
+            if self.win:
+                self.start_screen[1] = True
+                self.start_screen[0].intro_text.append(self.win)
+                self.game = False
+                self.win = None
+                return
 
     def ai_move(self):
         for y in range(len(self.board_player.board)):
@@ -759,15 +797,13 @@ pygame.display.set_caption('Морской бой')
 game = Game()
 try:
     clock = pygame.time.Clock()
-    # таймер использовать будем при ходе ИИ
-    TIMER = pygame.USEREVENT + 1
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN and \
-                    event.key == pygame.K_ESCAPE and not (game.start_screen[1]):
+                event.key == pygame.K_ESCAPE and not (game.start_screen[1]):
                 # Вновь рисуем стартовое окно в случае, если нажат Esc
                 game.start_screen[1] = True
             # поворачиваем
