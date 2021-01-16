@@ -181,14 +181,13 @@ class Game:
             self.start_screen[0].draw()
             self.start_game()
             self.start_screen[1] = False
-        # выводим поля
-        self.board_player.render()
-        self.board_bot.render()
         # выводим спрайты
         self.group.draw(screen)
         for btn in self.buttons:
             if btn[1]:
                 screen.blit(btn[0].text, (btn[0].x, btn[0].y))
+        self.board_player.render()
+        self.board_bot.render()
 
     def draw_error(self):
         # Указываем ошибку
@@ -246,32 +245,52 @@ class Game:
         self.rotate = False
 
     def move_player(self, pos_mouse):
-        self.board_bot.get_click(event.pos)
+        move = self.board_bot.get_click(event.pos)
+        if move == '*':
+            move = self.ai_move()
+            while move != '*':
+                move = self.ai_move()
 
     def ai_move(self):
         for y in range(len(self.board_player.board)):
             for x in range(len(self.board_player.board[y])):
-                if self.board_player.board[y][x] == 'x':
-                    if self.board_player.board[y + 1][x] == '.':
-                        self.board_player.board[y + 1][x] = 'x'
-                        self.board_player.check(x, y)
-                        return
-                    elif self.board_player.board[y - 1][x] == '.':
-                        self.board_player.board[y - 1][x] = 'x'
-                        self.board_player.check(x, y)
-                        return
-                    elif self.board_player.board[y][x + 1] == '.':
-                        self.board_player.board[y][x + 1] = 'x'
-                        self.board_player.check(x, y)
-                        return
-                    elif self.board_player.board[y][x - 1] == '.':
-                        self.board_player.board[y][x - 1] = 'x'
-                        self.board_player.check(x, y)
-                        return
+                try:
+                    if self.board_player.board[y][x] == 'x':
+                        if self.board_player.board[y + 1][x] == '.':
+                            self.board_player.board[y + 1][x] = '*'
+                            return '*'
+                        elif self.board_player.board[y + 1][x] in '1234':
+                            self.board_player.check(x, y + 1)
+                            return 'x'
+                        elif self.board_player.board[y - 1][x] == '.':
+                            self.board_player.board[y - 1][x] = '*'
+                            return '*'
+                        elif self.board_player.board[y - 1][x] in '1234':
+                            self.board_player.check(x, y - 1)
+                            return 'x'
+                        elif self.board_player.board[y][x + 1] == '.':
+                            self.board_player.board[y][x + 1] = '*'
+                            return '*'
+                        elif self.board_player.board[y][x + 1] in '1234':
+                            self.board_player.check(x + 1, y)
+                            return 'x'
+                        elif self.board_player.board[y][x - 1] == '.':
+                            self.board_player.board[y][x - 1] = '*'
+                            return '*'
+                        elif self.board_player.board[y][x - 1] in '1234':
+                            self.board_player.check(x - 1, y)
+                            return 'x'
+                except IndexError:
+                    pass
         x, y = random.randrange(9), random.randrange(9)
-        while self.board_player.board[y][x] != '.':
+        while self.board_player.board[y][x] in 'x#':
             x, y = random.randrange(9), random.randrange(9)
-        self.board_player.board[y][x] = 'x'
+        if self.board_player.board[y][x] in '1234':
+            self.board_player.check(x, y)
+            return 'x'
+        elif self.board_player.board[y][x] == '.':
+            self.board_player.board[y][x] = '*'
+            return '*'
 
     def add_ships(self):
         x = 10
@@ -446,6 +465,23 @@ class BoardPlayer:
                                  (x * self.cell_size + self.left + self.cell_size,
                                   y * self.cell_size + self.top + self.cell_size,
                                   self.cell_size, self.cell_size), 1)
+                if self.board[y][x] == '*':
+                    pygame.draw.ellipse(screen,
+                                        (0, 0, 0),
+                                        (self.left + self.cell_size * (x + 1) + 3,
+                                         self.top + self.cell_size * (y + 1) + 3,
+                                         self.cell_size - 6,
+                                         self.cell_size - 6), 0)
+                if self.board[y][x] == 'x':
+                    pygame.draw.rect(screen, pygame.Color('black'),
+                                     (x * self.cell_size + self.left + self.cell_size + 5,
+                                      y * self.cell_size + self.top + self.cell_size + 5,
+                                      self.cell_size - 10, self.cell_size - 10), 3)
+                if self.board[y][x] == '#':
+                    pygame.draw.rect(screen, pygame.Color('black'),
+                                     (x * self.cell_size + self.left + self.cell_size,
+                                      y * self.cell_size + self.top + self.cell_size,
+                                      self.cell_size, self.cell_size), 0)
 
     def get_cell(self, pos):
         x, y = pos
@@ -514,6 +550,8 @@ class BoardPlayer:
                         end = 1
                 if end == 0:
                     break
+        else:
+            self.board[y][x] = 'x'
 
 
 # бота:
@@ -558,7 +596,7 @@ class BoardBot:
                     pygame.draw.rect(screen, pygame.Color('black'),
                                      (x * self.cell_size + self.left + self.cell_size + 5,
                                       y * self.cell_size + self.top + self.cell_size + 5,
-                                      self.cell_size - 10, self.cell_size - 10), 1)
+                                      self.cell_size - 10, self.cell_size - 10), 3)
                 if self.board[y][x] == '#':
                     pygame.draw.rect(screen, pygame.Color('black'),
                                      (x * self.cell_size + self.left + self.cell_size,
@@ -576,6 +614,7 @@ class BoardBot:
     def on_click(self, cell_coords):
         if self.board[cell_coords[1]][cell_coords[0]] == '.':
             self.board[cell_coords[1]][cell_coords[0]] = '*'
+            return '*'
         if self.board[cell_coords[1]][cell_coords[0]] == '1' or \
                 self.board[cell_coords[1]][cell_coords[0]] in '234' and \
                 self.board[cell_coords[1]][cell_coords[0] + 1] not in '234' and \
@@ -602,14 +641,16 @@ class BoardBot:
                         self.board[cell_coords[1] - x][cell_coords[0]] = '#'
                         end = 1
                 if end == 0:
-                    break
+                    return '#'
         if self.board[cell_coords[1]][cell_coords[0]] in '234':
             self.board[cell_coords[1]][cell_coords[0]] = 'x'
+            return 'x'
 
     def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
         if not (cell is None):
-            self.on_click(cell)
+            res = self.on_click(cell)
+            return res
 
 
 # основной класс для всех кораблей
